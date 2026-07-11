@@ -1,0 +1,77 @@
+@import "tailwindcss";
+.font-playfair {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-optical-sizing: auto;
+}
+
+:root {
+  --background: #FAFFFB;
+  --foreground: #1a1a1a;
+
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --secondary: #ec4899;
+  --secondary-foreground: #ffffff;
+
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --muted: #f3e8ff;
+  --muted-foreground: #6b7280;
+  --border: #e5e7eb;
+  --ring: #8b5cf6;
+
+  --radius: 1rem;
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+input::placeholder {
+  color: #667085;
+  opacity: 1;
+}
+
+/* Scroll-driven fade-out for the hero content */
+@supports (animation-timeline: scroll()) {
+  @keyframes heroFadeOut {
+    from {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-24px);
+    }
+  }
+
+  .hero-fade-on-scroll {
+    animation: heroFadeOut linear both;
+    animation-timeline: scroll(nearest);
+    animation-range: 5vh 55vh;
+  }
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-white::-webkit-scrollbar {
+  width: 3px;
+}
+.scrollbar-white::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-white::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 100px;
+}
+.scrollbar-white {
+  scrollbar-color: rgba(255, 255, 255, 0.7) transparent;
+  scrollbar-width: thin;
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@withyou/ui-config",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./tailwind.config.ts",
+  "peerDependencies": {
+    "tailwindcss": "^4.0.0"
+  }
+}

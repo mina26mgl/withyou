@@ -1,0 +1,281 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CONSUMER
+  PARTNER
+  ADMIN
+}
+
+enum StatutPartenaire {
+  PENDING
+  ACTIVE
+  REJECTED
+}
+
+enum StatutProduit {
+  DRAFT
+  PENDING
+  ACTIVE
+  REJECTED
+}
+
+enum StatutCommande {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum ModePaiement {
+  CIB
+  SATIM
+  CASH_LIVRAISON
+}
+
+enum StatutPaiement {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  passwordHash     String
+  role             Role      @default(CONSUMER)
+  isVerified       Boolean   @default(false)
+  refreshTokenHash String?
+  lastLogin        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  consommateur Consommateur?
+  partenaire   Partenaire?
+  notifications Notification[]
+}
+
+model Consommateur {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  nom             String
+  prenom          String
+  dateNaissance   DateTime?
+  phone           String?
+  adresse         String?
+  wilaya          String?
+  pointsFidelite  Int      @default(0)
+  onboardingDone  Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  skinProfile     SkinProfile?
+  skinScans       SkinScan[]
+  commandes       Commande[]
+  avis            Avis[]
+  favoris         Favori[]
+  pointsHistory   PointsFidelite[]
+}
+
+model Partenaire {
+  id               String           @id @default(uuid())
+  userId           String           @unique
+  user             User             @relation(fields: [userId], references: [id])
+  nomEntreprise    String
+  nomFondateur     String
+  prenomFondateur  String
+  type             String
+  statut           StatutPartenaire @default(PENDING)
+  NIF              String?
+  NIC              String?
+  RC               String?
+  AI               String?
+  urlInstagram     String?
+  wilaya           String?
+  commissionRate   Decimal          @default(0.10)
+  dateIntegration  DateTime?
+  dateResiliation  DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  produits         Produit[]
+  promotions       PromotionSponsor[]
+}
+
+model Categorie {
+  id       String      @id @default(uuid())
+  nom      String
+  slug     String      @unique
+  parentId String?
+  parent   Categorie?  @relation("CategorieParent", fields: [parentId], references: [id])
+  enfants  Categorie[] @relation("CategorieParent")
+  produits Produit[]
+}
+
+model Produit {
+  id               String        @id @default(uuid())
+  partenaireId     String
+  partenaire       Partenaire    @relation(fields: [partenaireId], references: [id])
+  categorieId      String?
+  categorie        Categorie?    @relation(fields: [categorieId], references: [id])
+  nom              String
+  description      String
+  ingredients      String?
+  prix             Decimal
+  stock            Int           @default(0)
+  statut           StatutProduit @default(DRAFT)
+  imagesUrls       String[]
+  modeConservation String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?
+
+  lignesCommande   LigneCommande[]
+  avis             Avis[]
+  favoris          Favori[]
+
+  @@index([partenaireId, statut])
+}
+
+model SkinProfile {
+  id              String       @id @default(uuid())
+  consommateurId  String       @unique
+  consommateur    Consommateur @relation(fields: [consommateurId], references: [id])
+  skinType        String?
+  concerns        Json?
+  routinePreferee String?
+  updatedAt       DateTime     @updatedAt
+}
+
+model SkinScan {
+  id                    String       @id @default(uuid())
+  consommateurId        String
+  consommateur          Consommateur @relation(fields: [consommateurId], references: [id])
+  resultatJson          Json?
+  produitsRecommandes   String[]
+  routineJson           Json?
+  scanImageUrl          String?
+  source                String       @default("web")
+  createdAt             DateTime     @default(now())
+}
+
+model Commande {
+  id                 String         @id @default(uuid())
+  consommateurId     String
+  consommateur       Consommateur   @relation(fields: [consommateurId], references: [id])
+  statut             StatutCommande @default(PENDING)
+  montantTotal       Decimal
+  montantCommission  Decimal        @default(0)
+  modePaiement       ModePaiement
+  adresseLivraison   String
+  wilayaLivraison    String
+  codeSuivi          String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  lignes     LigneCommande[]
+  paiement   Paiement?
+  livraison  Livraison?
+
+  @@index([wilayaLivraison])
+}
+
+model LigneCommande {
+  id          String   @id @default(uuid())
+  commandeId  String
+  commande    Commande @relation(fields: [commandeId], references: [id])
+  produitId   String
+  produit     Produit  @relation(fields: [produitId], references: [id])
+  quantite    Int
+  prixUnitaire Decimal
+  commission  Decimal  @default(0)
+}
+
+model Paiement {
+  id             String         @id @default(uuid())
+  commandeId     String         @unique
+  commande       Commande       @relation(fields: [commandeId], references: [id])
+  methode        ModePaiement
+  statut         StatutPaiement @default(PENDING)
+  montant        Decimal
+  transactionRef String?
+  createdAt      DateTime       @default(now())
+}
+
+model Livraison {
+  id                  String   @id @default(uuid())
+  commandeId          String   @unique
+  commande            Commande @relation(fields: [commandeId], references: [id])
+  prestataire         String?
+  codeSuivi           String?
+  statut              String   @default("PREPARING")
+  adresseLivraison    String?
+  dateExpedition      DateTime?
+  dateArrivee         DateTime?
+  phoneCorrespondant  String?
+}
+
+model Avis {
+  id              String       @id @default(uuid())
+  consommateurId  String
+  consommateur    Consommateur @relation(fields: [consommateurId], references: [id])
+  produitId       String
+  produit         Produit      @relation(fields: [produitId], references: [id])
+  note            Int
+  commentaire     String?
+  isVerifiedAchat Boolean      @default(false)
+  statut          String       @default("PENDING")
+  createdAt       DateTime     @default(now())
+}
+
+model PointsFidelite {
+  id              String       @id @default(uuid())
+  consommateurId  String
+  consommateur    Consommateur @relation(fields: [consommateurId], references: [id])
+  points          Int
+  type            String
+  source          String?
+  createdAt       DateTime     @default(now())
+}
+
+model Favori {
+  id              String       @id @default(uuid())
+  consommateurId  String
+  consommateur    Consommateur @relation(fields: [consommateurId], references: [id])
+  produitId       String
+  produit         Produit      @relation(fields: [produitId], references: [id])
+  createdAt       DateTime     @default(now())
+
+  @@unique([consommateurId, produitId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  titre     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model PromotionSponsor {
+  id           String     @id @default(uuid())
+  partenaireId String
+  partenaire   Partenaire @relation(fields: [partenaireId], references: [id])
+  type         String
+  budgetDz     Decimal
+  dateDebut    DateTime
+  dateFin      DateTime
+  statut       String     @default("ACTIVE")
+}
