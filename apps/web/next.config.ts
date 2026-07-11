@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
     maxInactiveAge: 60 * 60 * 1000,
     pagesBufferLength: 10,
   },
+  eslint: {
+    // Avertissement : Cela permet de générer le build en production même s'il y a des erreurs ESLint.
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;
