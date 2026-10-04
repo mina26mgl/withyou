@@ -8,8 +8,9 @@ export class CreateProduitDto {
   description: string;
 
   @IsOptional()
-  @IsString()
-  ingredients?: string;
+  @IsArray()
+  @IsString({ each: true })
+  ingredients?: string[];
 
   @IsNumber()
   @Min(0)
@@ -19,12 +20,14 @@ export class CreateProduitDto {
   @Min(0)
   stock: number;
 
-  @IsOptional()
+  @IsString()
+  categorieId: string;
+
   @IsArray()
   @IsString({ each: true })
-  imagesUrls?: string[];
+  modesConservation: string[];
 
-  @IsOptional()
-  @IsString()
-  categorieId?: string;
+  @IsNumber()
+  @Min(0)
+  comissionNegocie: number;
 }

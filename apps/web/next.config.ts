@@ -1,5 +1,9 @@
 import type { NextConfig } from 'next';
 
+// Fichiers envoyés (produits, marques, profils) servis par l'API sous /uploads —
+// en http://localhost:3001 en local, d'où ce motif en plus du https général.
+const apiUrl = new URL(process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001');
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@withyou/shared-types', '@withyou/shared-utils'],
@@ -8,6 +12,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '**',
+      },
+      {
+        protocol: apiUrl.protocol === 'https:' ? 'https' : 'http',
+        hostname: apiUrl.hostname,
+        port: apiUrl.port,
+        pathname: '/uploads/**',
       },
     ],
   },

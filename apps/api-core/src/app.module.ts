@@ -8,7 +8,14 @@ import { ProduitsModule } from './produits/produits.module';
 import { CommandesModule } from './commandes/commandes.module';
 import { PanierModule } from './panier/panier.module';
 import { SearchModule } from './search/search.module';
+import { ClerkWebhookModule } from './webhooks/clerk-webhook.module';
 import { PrismaService } from './prisma/prisma.service';
+import { PartnerModule } from './partner/partner.module';
+import { MarquesModule } from './marques/marques.module';
+import { CategoriesModule } from './categories/categories.module';
+import { EventsModule } from './events/events.module';
+import { AdminModule } from './admin/admin.module';
+import { BrandRequestModule } from './brand-request/brand-request.module';
 
 @Module({
   imports: [
@@ -21,6 +28,13 @@ import { PrismaService } from './prisma/prisma.service';
     CommandesModule,
     PanierModule,
     SearchModule,
+    ClerkWebhookModule,
+    PartnerModule,
+    MarquesModule,
+    CategoriesModule,
+    EventsModule,
+    AdminModule,
+    BrandRequestModule,
   ],
   providers: [PrismaService],
   exports: [PrismaService],

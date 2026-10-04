@@ -1,6 +1,8 @@
-import type { Metadata } from 'next';
-import { Inter, EB_Garamond, Meow_Script } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
+import { Inter, EB_Garamond, Meow_Script, Averia_Serif_Libre } from 'next/font/google';
 import localFont from 'next/font/local';
+import { ClerkProvider } from '@clerk/nextjs';
+import { frFR } from '@clerk/localizations';
 import '@/styles/globals.css';
 
 const playfair = localFont({
@@ -37,9 +39,23 @@ const meowScript = Meow_Script({
   display: 'swap',
 });
 
+const averia = Averia_Serif_Libre({
+  subsets: ['latin'],
+  weight: ['300', '400', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-averia',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'WithYou — Beauté & Cosmétique',
   description: 'Marketplace beauté et cosmétique algérienne',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -48,8 +64,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" className={`${playfair.variable} ${inter.variable} ${ebGaramond.variable} ${meowScript.variable}`}>
-      <body className="antialiased">{children}</body>
-    </html>
+    <ClerkProvider localization={frFR}>
+      <html lang="fr" className={`${playfair.variable} ${inter.variable} ${ebGaramond.variable} ${meowScript.variable} ${averia.variable}`}>
+        <body className="antialiased">{children}</body>
+      </html>
+    </ClerkProvider>
   );
 }

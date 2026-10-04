@@ -44,3 +44,4 @@ Thumbs.db
 
 # Coverage
 coverage/
+apps/api-core/uploads/

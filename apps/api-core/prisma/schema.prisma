@@ -7,275 +7,954 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  CONSUMER
-  PARTNER
-  ADMIN
+model admin {
+  id_admin            String                @id @db.Uuid
+  nom                 String
+  prenom              String
+  created_at          DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime?             @db.Timestamptz(6)
+  role_admin          String
+  /// Coordonnées affichées à l'équipe (page Profil de la console).
+  telephone           String?
+  poste               String?
+  /// Accès retiré par un responsable : la ligne reste (journal d'audit), la console est fermée.
+  actif               Boolean               @default(true)
+  desactive_at        DateTime?             @db.Timestamptz(6)
+  id_usr              String                @unique(map: "use_unique") @db.Uuid
+  user                user                  @relation(fields: [id_usr], references: [id_usr], onDelete: NoAction, onUpdate: NoAction, map: "usr_admin")
+  audit_log           audit_log[]
+  refund_request      refund_request[]
+  tickets_ouverts     ticket_transporteur[] @relation("ticket_opened_by")
+  tickets_resolus     ticket_transporteur[] @relation("ticket_resolved_by")
+  marques_suivies     marque[]              @relation("charge_compte")
+  abonnements_actives abonnement_marque[]   @relation("abonnement_active_par")
+  invitations         admin_invitation[]    @relation("invitation_par")
 }
 
-enum StatutPartenaire {
-  PENDING
-  ACTIVE
-  REJECTED
+/// Accès à la console donné par un responsable (OWNER) à une adresse e-mail.
+/// La personne crée son compte (ou se connecte) avec cette adresse : sa ligne
+/// admin est créée à ce moment-là.
+model admin_invitation {
+  id_invitation String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String
+  prenom        String
+  nom           String
+  role_admin    String
+  poste         String?
+  invited_by    String    @db.Uuid
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  accepted_at   DateTime? @db.Timestamptz(6)
+  revoked_at    DateTime? @db.Timestamptz(6)
+  inviteur      admin     @relation("invitation_par", fields: [invited_by], references: [id_admin], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([email])
 }
 
-enum StatutProduit {
-  DRAFT
-  PENDING
-  ACTIVE
-  REJECTED
+model capture_scan {
+  id_capture      String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_scan         String          @db.Uuid
+  image_url       String
+  angle_visage    String?
+  created_at      DateTime        @default(now()) @db.Timestamptz(6)
+  historique_scan historique_scan @relation(fields: [id_scan], references: [id_scan], onDelete: Cascade, onUpdate: NoAction)
 }
 
-enum StatutCommande {
-  PENDING
-  CONFIRMED
-  SHIPPED
-  DELIVERED
-  CANCELLED
-}
-
-enum ModePaiement {
-  CIB
-  SATIM
-  CASH_LIVRAISON
-}
-
-enum StatutPaiement {
-  PENDING
-  SUCCESS
-  FAILED
-}
-
-model User {
-  id               String    @id @default(uuid())
-  email            String    @unique
-  passwordHash     String
-  role             Role      @default(CONSUMER)
-  isVerified       Boolean   @default(false)
-  refreshTokenHash String?
-  lastLogin        DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  deletedAt        DateTime?
-
-  consommateur Consommateur?
-  partenaire   Partenaire?
-  notifications Notification[]
-}
-
-model Consommateur {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id])
+model categorie {
+  id_cat          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   nom             String
-  prenom          String
-  dateNaissance   DateTime?
-  phone           String?
-  adresse         String?
-  wilaya          String?
-  pointsFidelite  Int      @default(0)
-  onboardingDone  Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  skinProfile     SkinProfile?
-  skinScans       SkinScan[]
-  commandes       Commande[]
-  avis            Avis[]
-  favoris         Favori[]
-  pointsHistory   PointsFidelite[]
+  slug            String      @unique(map: "unique_categorie_slug")
+  id_parent       String?     @db.Uuid
+  image_url       String?
+  description     String?
+  created_at      DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime    @default(now()) @db.Timestamptz(6)
+  categorie       categorie?  @relation("categorieTocategorie", fields: [id_parent], references: [id_cat], onUpdate: NoAction, map: "fk_categorie_parent")
+  other_categorie categorie[] @relation("categorieTocategorie")
+  produit         produit[]
 }
 
-model Partenaire {
-  id               String           @id @default(uuid())
-  userId           String           @unique
-  user             User             @relation(fields: [userId], references: [id])
-  nomEntreprise    String
-  nomFondateur     String
-  prenomFondateur  String
-  type             String
-  statut           StatutPartenaire @default(PENDING)
-  NIF              String?
-  NIC              String?
-  RC               String?
-  AI               String?
-  urlInstagram     String?
-  wilaya           String?
-  commissionRate   Decimal          @default(0.10)
-  dateIntegration  DateTime?
-  dateResiliation  DateTime?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+model consomateur {
+  id_consumer       String                   @id @db.Uuid
+  nom               String?
+  prenom            String?
+  birth_date        DateTime?                @db.Date
+  id_usr            String                   @db.Uuid
+  phone             String?
+  adresse           String?
+  wilaya            String?
+  points_fidelite   Int?                     @default(0)
+  user_vector       Unsupported("tsvector")?
+  onboarding_done   Boolean?                 @default(false)
+  gender            String?
+  updated_at        DateTime?                @db.Timestamptz(6)
+  commune           String?
+  /// Onboarding (quiz de peau) : identifiants des choix, cf. users/onboarding.dto.ts.
+  type_peau          String[]                 @default([])
+  preoccupations     String[]                 @default([])
+  routine_actuelle   String[]                 @default([])
+  /// Réactivité de la peau, de 0 (« je ne sais pas ») à 5 (« très sensible »).
+  sensibilite        Int?                     @db.SmallInt
+  /// Précautions de /quiz-precautions (traitement prescrit, actif fort, grossesse) : on introduit les actifs plus doucement.
+  precautions        String[]                 @default([])
+  onboarding_done_at DateTime?                @db.Timestamptz(6)
+  user              user                     @relation(fields: [id_usr], references: [id_usr], onDelete: NoAction, onUpdate: NoAction, map: "user_consumer")
+  historique_points historique_points[]
+  historique_scan   historique_scan[]
+  order             order[]
+  wishlist          wishlist[]
+  avis              avis[]
+  analytics_event   analytics_event[]
 
-  produits         Produit[]
-  promotions       PromotionSponsor[]
+  @@unique([id_usr, phone], map: "uniqusr")
 }
 
-model Categorie {
-  id       String      @id @default(uuid())
-  nom      String
-  slug     String      @unique
-  parentId String?
-  parent   Categorie?  @relation("CategorieParent", fields: [parentId], references: [id])
-  enfants  Categorie[] @relation("CategorieParent")
-  produits Produit[]
-}
-
-model Produit {
-  id               String        @id @default(uuid())
-  partenaireId     String
-  partenaire       Partenaire    @relation(fields: [partenaireId], references: [id])
-  categorieId      String?
-  categorie        Categorie?    @relation(fields: [categorieId], references: [id])
-  nom              String
-  description      String
-  ingredients      String?
-  prix             Decimal
-  stock            Int           @default(0)
-  statut           StatutProduit @default(DRAFT)
-  imagesUrls       String[]
-  modeConservation String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  deletedAt        DateTime?
-
-  lignesCommande   LigneCommande[]
-  avis             Avis[]
-  favoris          Favori[]
-
-  @@index([partenaireId, statut])
-}
-
-model SkinProfile {
-  id              String       @id @default(uuid())
-  consommateurId  String       @unique
-  consommateur    Consommateur @relation(fields: [consommateurId], references: [id])
-  skinType        String?
-  concerns        Json?
-  routinePreferee String?
-  updatedAt       DateTime     @updatedAt
-}
-
-model SkinScan {
-  id                    String       @id @default(uuid())
-  consommateurId        String
-  consommateur          Consommateur @relation(fields: [consommateurId], references: [id])
-  resultatJson          Json?
-  produitsRecommandes   String[]
-  routineJson           Json?
-  scanImageUrl          String?
-  source                String       @default("web")
-  createdAt             DateTime     @default(now())
-}
-
-model Commande {
-  id                 String         @id @default(uuid())
-  consommateurId     String
-  consommateur       Consommateur   @relation(fields: [consommateurId], references: [id])
-  statut             StatutCommande @default(PENDING)
-  montantTotal       Decimal
-  montantCommission  Decimal        @default(0)
-  modePaiement       ModePaiement
-  adresseLivraison   String
-  wilayaLivraison    String
-  codeSuivi          String?
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-
-  lignes     LigneCommande[]
-  paiement   Paiement?
-  livraison  Livraison?
-
-  @@index([wilayaLivraison])
-}
-
-model LigneCommande {
-  id          String   @id @default(uuid())
-  commandeId  String
-  commande    Commande @relation(fields: [commandeId], references: [id])
-  produitId   String
-  produit     Produit  @relation(fields: [produitId], references: [id])
-  quantite    Int
-  prixUnitaire Decimal
-  commission  Decimal  @default(0)
-}
-
-model Paiement {
-  id             String         @id @default(uuid())
-  commandeId     String         @unique
-  commande       Commande       @relation(fields: [commandeId], references: [id])
-  methode        ModePaiement
-  statut         StatutPaiement @default(PENDING)
-  montant        Decimal
-  transactionRef String?
-  createdAt      DateTime       @default(now())
-}
-
-model Livraison {
-  id                  String   @id @default(uuid())
-  commandeId          String   @unique
-  commande            Commande @relation(fields: [commandeId], references: [id])
-  prestataire         String?
-  codeSuivi           String?
-  statut              String   @default("PREPARING")
-  adresseLivraison    String?
-  dateExpedition      DateTime?
-  dateArrivee         DateTime?
-  phoneCorrespondant  String?
-}
-
-model Avis {
-  id              String       @id @default(uuid())
-  consommateurId  String
-  consommateur    Consommateur @relation(fields: [consommateurId], references: [id])
-  produitId       String
-  produit         Produit      @relation(fields: [produitId], references: [id])
-  note            Int
-  commentaire     String?
-  isVerifiedAchat Boolean      @default(false)
-  statut          String       @default("PENDING")
-  createdAt       DateTime     @default(now())
-}
-
-model PointsFidelite {
-  id              String       @id @default(uuid())
-  consommateurId  String
-  consommateur    Consommateur @relation(fields: [consommateurId], references: [id])
+model historique_points {
+  id_mouvement    String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_consumer     String      @db.Uuid
+  id_order        String?     @db.Uuid
   points          Int
-  type            String
-  source          String?
-  createdAt       DateTime     @default(now())
+  type_mouvement  String
+  description     String?
+  date_expiration DateTime?   @db.Timestamptz(6)
+  created_at      DateTime    @default(now()) @db.Timestamptz(6)
+  consomateur     consomateur @relation(fields: [id_consumer], references: [id_consumer], onDelete: Cascade, onUpdate: NoAction)
+  order           order?      @relation(fields: [id_order], references: [id_order], onUpdate: NoAction)
+
+  @@index([id_consumer], map: "idx_points_consumer")
 }
 
-model Favori {
-  id              String       @id @default(uuid())
-  consommateurId  String
-  consommateur    Consommateur @relation(fields: [consommateurId], references: [id])
-  produitId       String
-  produit         Produit      @relation(fields: [produitId], references: [id])
-  createdAt       DateTime     @default(now())
-
-  @@unique([consommateurId, produitId])
+model historique_scan {
+  id_scan        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_consumer    String         @db.Uuid
+  statut_analyse String         @default("en_cours")
+  created_at     DateTime       @default(now()) @db.Timestamptz(6)
+  capture_scan   capture_scan[]
+  consomateur    consomateur    @relation(fields: [id_consumer], references: [id_consumer], onDelete: Cascade, onUpdate: NoAction)
 }
 
-model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  type      String
-  titre     String
-  message   String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
+model historique_stock {
+  id_hist_stock  String   @id @db.Uuid
+  id_produit     String   @db.Uuid
+  date           DateTime @db.Timestamptz(6)
+  quantite_stock Int
+  produit        produit  @relation(fields: [id_produit], references: [id_product], onDelete: NoAction, onUpdate: NoAction, map: "produit")
 }
 
-model PromotionSponsor {
-  id           String     @id @default(uuid())
-  partenaireId String
-  partenaire   Partenaire @relation(fields: [partenaireId], references: [id])
-  type         String
-  budgetDz     Decimal
-  dateDebut    DateTime
-  dateFin      DateTime
-  statut       String     @default("ACTIVE")
+model identity_marque {
+  id_identity        String  @id @db.Uuid
+  id_marque          String  @unique(map: "marque_unique") @db.Uuid
+  couleur_principale String  @default("#FAFFFB")
+  couleur_secondaire String  @default("#FFFFFF")
+  couleur_titre      String  @default("#07320D")
+  couleur_titre2     String?
+  couleur_text       String  @default("#4D6551")
+  couleur_text2      String?
+  couleur_border     String? @default("#FFFFFF")
+  logo_url           String?
+  banner_url         String?
+  /// Image de couverture quand banner_url est une vidéo (chargement, mauvaise connexion, « Marques du jour »).
+  banner_poster_url  String?
+  audio_url          String?
+  title_font         String  @default("serif")
+  marque             marque  @relation(fields: [id_marque], references: [id_marque], onDelete: NoAction, onUpdate: NoAction, map: "marque_fk")
+}
+
+model invitation_partenaire {
+  id_invitation      String             @id @db.Uuid
+  id_marque          String             @db.Uuid
+  email              String
+  role_partenaire    String
+  token              String             @unique(map: "token")
+  /// PENDING, ACCEPTED ou REVOKED.
+  status             String
+  invited_by         String             @db.Uuid
+  created_at         DateTime           @db.Timestamptz(6)
+  expires_at         DateTime           @db.Timestamptz(6)
+  prenom             String?
+  nom                String?
+  titre_poste        String?
+  accepted_at        DateTime?          @db.Timestamptz(6)
+  partenaire_contact partenaire_contact @relation(fields: [invited_by], references: [id_partenaire], onDelete: NoAction, onUpdate: NoAction, map: "invited_by")
+}
+
+model ligne_order {
+  id_ligne      String  @id @db.Uuid
+  id_order      String  @db.Uuid
+  id_product    String  @db.Uuid
+  quantite      Int     @default(1)
+  prix_unitaire Decimal @db.Decimal
+  comission     Decimal @db.Decimal
+  order         order   @relation(fields: [id_order], references: [id_order], onDelete: NoAction, onUpdate: NoAction, map: "order")
+  produit       produit @relation(fields: [id_product], references: [id_product], onDelete: NoAction, onUpdate: NoAction, map: "product")
+
+  @@unique([id_order, id_product], map: "unique_product_per_order")
+}
+
+model livraison {
+  id_ship             String    @id @db.Uuid
+  id_order            String    @db.Uuid
+  prestatire          String
+  code_suivi          String?
+  statut              String
+  date_expidition     DateTime? @db.Timestamptz(6)
+  date_livraison      DateTime? @db.Timestamptz(6)
+  phone_correspendant String?
+  type_livraison      String
+  frais_livraison     Decimal   @db.Decimal
+  created_at          DateTime? @db.Timestamptz(6)
+  order               order     @relation(fields: [id_order], references: [id_order], onDelete: NoAction, onUpdate: NoAction, map: "order")
+}
+
+model marque {
+  id_marque          String               @id @db.Uuid
+  nom_marque         String
+  slug               String               @unique(map: "unique_marque_slug")
+  date_creation      DateTime             @db.Date
+  adresse            String
+  engagement         String[]
+  besoin             String[]
+  wilaya_marque      String
+  histoire_marque    String
+  origin             String?
+  /// Lieu d'origine choisi sur la carte (« D'où vient la marque »), libellé dans wilaya_marque.
+  origin_lat         Float?
+  origin_lng         Float?
+  /// Sections choisies de la page publiée : { needs, featuredProductIds, featuredReviewIds }.
+  sections           Json?
+  draft              Json?
+  page_status        page_status          @default(DRAFT)
+  // Admin-facing account fields — distinct from page_status, which only
+  // governs the public brand page's own publish lifecycle.
+  type               String               @default("Artisan")
+  commission_rate    Decimal              @default(15) @db.Decimal
+  compte_status      compte_status        @default(ACTIVE)
+  suspended_reason   String?
+  identity_marque    identity_marque?
+  marque_visage      marque_visage[]
+  partenaire_contact partenaire_contact[]
+  produit            produit[]
+  brand_pickup       brand_pickup[]
+  validation_request validation_request[]
+  order_incident     order_incident[]
+  avis               avis[]
+  promotion          promotion[]
+  placement_request  placement_request[]
+  salon_test         salon_test[]
+  analytics_event    analytics_event[]
+  marque_legal       marque_legal?
+  /// Collaborateur withyou qui suit la marque (chargé de compte).
+  id_charge_compte   String?              @db.Uuid
+  charge_compte      admin?               @relation("charge_compte", fields: [id_charge_compte], references: [id_admin], onDelete: SetNull, onUpdate: NoAction)
+  abonnements        abonnement_marque[]
+  box_candidature    box_candidature[]
+}
+
+enum page_status {
+  DRAFT
+  IN_REVIEW
+  LIVE
+}
+
+enum compte_status {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+model marque_visage {
+  id_marque String @db.Uuid
+  id_visage String @db.Uuid
+  role      String
+  marque    marque @relation(fields: [id_marque], references: [id_marque], onDelete: Cascade, onUpdate: NoAction)
+  visage    visage @relation(fields: [id_visage], references: [id_visage], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id_marque, id_visage])
+}
+
+model order {
+  id_order            String                @id @db.Uuid
+  id_consumer         String                @db.Uuid
+  status              String
+  montant_total       Decimal               @db.Decimal
+  montant_comission   Decimal               @db.Decimal
+  mode_paiement       String
+  adresse_livraison   String
+  wilaya_livraison    String
+  commune_livraison   String
+  code_suivi          String
+  created_at          DateTime?             @db.Timestamptz(6)
+  updated_at          DateTime?             @db.Timestamptz(6)
+  historique_points   historique_points[]
+  ligne_order         ligne_order[]
+  livraison           livraison[]
+  consomateur         consomateur           @relation(fields: [id_consumer], references: [id_consumer], onDelete: NoAction, onUpdate: NoAction, map: "consumer")
+  paiement            paiement[]
+  order_incident      order_incident[]
+  brand_pickup        brand_pickup[]
+  refund_request      refund_request[]
+  ticket_transporteur ticket_transporteur[]
+}
+
+enum incident_type {
+  BRAND
+  CLIENT
+  PAYMENT
+  QUALITY
+  CARRIER
+}
+
+/// An open (or resolved) blocking incident on an order. The rail step a
+/// commande sits at is derived from paiement/brand_pickup/livraison — this
+/// table is the ONLY place "blocked" state is stored, never inferred.
+model order_incident {
+  id_incident         String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_order            String                @db.Uuid
+  type                incident_type
+  reason              String
+  // Only meaningful for type=BRAND: which brand in a multi-brand order is
+  // the one to relance.
+  id_marque           String?               @db.Uuid
+  opened_at           DateTime              @default(now()) @db.Timestamptz(6)
+  resolved_at         DateTime?             @db.Timestamptz(6)
+  order               order                 @relation(fields: [id_order], references: [id_order], onDelete: Cascade, onUpdate: NoAction)
+  marque              marque?               @relation(fields: [id_marque], references: [id_marque], onDelete: SetNull, onUpdate: NoAction)
+  ticket_transporteur ticket_transporteur[]
+}
+
+/// Per-brand collection status within a multi-brand order — drives the
+/// "Collecte chez les marques" rail step.
+model brand_pickup {
+  id_pickup   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_order    String    @db.Uuid
+  id_marque   String    @db.Uuid
+  received    Boolean   @default(false)
+  received_at DateTime? @db.Timestamptz(6)
+  order       order     @relation(fields: [id_order], references: [id_order], onDelete: Cascade, onUpdate: NoAction)
+  marque      marque    @relation(fields: [id_marque], references: [id_marque], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([id_order, id_marque])
+}
+
+/// "Rembourser la cliente" only ever creates a request for accounting to
+/// action — never calls a payment provider directly.
+model refund_request {
+  id_refund    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_order     String   @db.Uuid
+  status       String   @default("PENDING_ACCOUNTING")
+  requested_by String   @db.Uuid
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  order        order    @relation(fields: [id_order], references: [id_order], onDelete: Cascade, onUpdate: NoAction)
+  admin        admin    @relation(fields: [requested_by], references: [id_admin], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model paiement {
+  id_paiement     String    @id @db.Uuid
+  id_order        String    @db.Uuid
+  methode         String
+  statut          String    @default("en_attente")
+  montant         Decimal   @db.Decimal
+  transaction_ref String?   @unique(map: "transaction")
+  created_at      DateTime? @db.Timestamptz(6)
+  date_paiement   DateTime? @db.Timestamptz(6)
+  order           order     @relation(fields: [id_order], references: [id_order], onDelete: NoAction, onUpdate: NoAction, map: "order")
+}
+
+model partenaire_contact {
+  id_partenaire         String                  @id @db.Uuid
+  id_usr                String                  @db.Uuid
+  id_marque             String                  @db.Uuid
+  role_partenaire       String
+  titre_poste           String
+  /// Identité du membre de l'équipe marque (page Mon profil de l'espace marque).
+  prenom                String?
+  nom                   String?
+  telephone             String?
+  created_at            DateTime?               @db.Timestamptz(6)
+  updated_at            DateTime?               @db.Timestamptz(6)
+  invitation_partenaire invitation_partenaire[]
+  marque                marque                  @relation(fields: [id_marque], references: [id_marque], onDelete: NoAction, onUpdate: NoAction, map: "contact_marque")
+  user                  user                    @relation(fields: [id_usr], references: [id_usr], onDelete: NoAction, onUpdate: NoAction, map: "usr_contact")
+}
+
+model produit {
+  id_product                String                   @id @db.Uuid
+  id_marque                 String                   @db.Uuid
+  id_categori               String                   @db.Uuid
+  nom                       String
+  description               String
+  ingredients               String[]
+  prix                      Decimal                  @db.Decimal
+  discount                  Decimal?                 @db.Decimal
+  stock                     Int                      @default(0)
+  status                    produit_status           @default(DRAFT)
+  /// Modes de conservation (plusieurs possibles), ex. « Au réfrigérateur ».
+  mode_conservation         String[]                 @default([])
+  size                      String?
+  skin_types                String[]                 @default([])
+  needs                     String[]                 @default([])
+  moment                    String?
+  produit_vector            Unsupported("tsvector")?
+  created_at                DateTime?                @db.Timetz(6)
+  updated_at                DateTime?                @db.Timetz(6)
+  min_stock                 Int?                     @default(5)
+  delai_reapprovisionnement Int?
+  duree_conservation_jours  Int?
+  date_restockage           DateTime?                @db.Timestamptz(6)
+  comission_negocie         Decimal                  @db.Decimal
+  historique_stock          historique_stock[]
+  ligne_order               ligne_order[]
+  categorie                 categorie                @relation(fields: [id_categori], references: [id_cat], onDelete: NoAction, onUpdate: NoAction, map: "categorie")
+  marque                    marque                   @relation(fields: [id_marque], references: [id_marque], onDelete: NoAction, onUpdate: NoAction, map: "marque")
+  produit_image             produit_image[]
+  produit_document          produit_document[]
+  validation_request        validation_request[]
+  avis                      avis[]
+  wishlist                  wishlist[]
+  promotion_produit         promotion_produit[]
+  salon_test                salon_test[]
+  analytics_event           analytics_event[]
+  box_produit               box_produit[]
+  /// Pack : produit composé d'autres produits de la marque (voir pack_produit).
+  is_pack                   Boolean                  @default(false)
+  pack_contenu              pack_produit[]           @relation("pack")
+  dans_packs                pack_produit[]           @relation("composant")
+}
+
+/// Contenu d'un pack : quels produits de la marque, en quelle quantité.
+/// Favoris de la cliente (cœur des cartes produit) : un produit au plus une fois par cliente.
+model wishlist {
+  id_consumer String      @db.Uuid
+  id_produit  String      @db.Uuid
+  created_at  DateTime    @default(now()) @db.Timestamptz(6)
+  consomateur consomateur @relation(fields: [id_consumer], references: [id_consumer], onDelete: Cascade, onUpdate: NoAction)
+  produit     produit     @relation(fields: [id_produit], references: [id_product], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id_consumer, id_produit])
+  @@index([id_produit])
+}
+
+model pack_produit {
+  id_pack    String  @db.Uuid
+  id_produit String  @db.Uuid
+  quantite   Int     @default(1)
+  ordre      Int     @default(0)
+  pack       produit @relation("pack", fields: [id_pack], references: [id_product], onDelete: Cascade, onUpdate: NoAction)
+  composant  produit @relation("composant", fields: [id_produit], references: [id_product], onDelete: Restrict, onUpdate: NoAction)
+
+  @@id([id_pack, id_produit])
+  @@index([id_produit])
+}
+
+enum produit_status {
+  DRAFT
+  IN_REVIEW
+  ONLINE
+  REJECTED
+}
+
+/// Ingredients the Charte Beauté Pure excludes — checked automatically
+/// ("Vérifié par l'IA") against a product's `ingredients` at validation time.
+model excluded_ingredient {
+  id_excluded String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nom         String   @unique
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+}
+
+enum validation_kind {
+  PRODUCT
+  PAGE
+  BRAND
+  PROOF
+}
+
+enum validation_status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model validation_request {
+  id_validation     String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kind              validation_kind
+  id_marque         String             @db.Uuid
+  id_produit        String?            @db.Uuid
+  status            validation_status  @default(PENDING)
+  rejection_message String?
+  // e.g. the commitment label being proven, for kind=PROOF
+  payload           Json?
+  created_at        DateTime           @default(now()) @db.Timestamptz(6)
+  resolved_at       DateTime?          @db.Timestamptz(6)
+  marque            marque             @relation(fields: [id_marque], references: [id_marque], onDelete: Cascade, onUpdate: NoAction)
+  produit           produit?           @relation(fields: [id_produit], references: [id_product], onDelete: Cascade, onUpdate: NoAction)
+  validation_check  validation_check[]
+}
+
+model validation_check {
+  id_check      String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_validation String             @db.Uuid
+  label         String
+  checked       Boolean            @default(false)
+  ai_verified   Boolean            @default(false)
+  validation    validation_request @relation(fields: [id_validation], references: [id_validation], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model audit_log {
+  id_log         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actor_admin_id String   @db.Uuid
+  action         String
+  target_type    String
+  target_id      String
+  before         Json?
+  after          Json?
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  admin          admin    @relation(fields: [actor_admin_id], references: [id_admin], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// Documents joints par la marque à un produit (fiche technique, certificat,
+/// analyses de laboratoire…), consultés par withyou à la validation.
+model produit_document {
+  id_document String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_produit  String   @db.Uuid
+  nom         String
+  url         String
+  type        String
+  taille      Int?
+  ordre       Int      @default(0)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  produit     produit  @relation(fields: [id_produit], references: [id_product], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([id_produit])
+}
+
+model produit_image {
+  id_image      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_produit    String    @db.Uuid
+  url           String
+  ordre         Int
+  is_principale Boolean   @default(false)
+  alt_text      String?
+  storage_key   String?
+  created_at    DateTime? @db.Timestamptz(6)
+  produit       produit   @relation(fields: [id_produit], references: [id_product], onDelete: NoAction, onUpdate: NoAction, map: "produit")
+}
+
+model user {
+  id_usr             String               @id @db.Uuid
+  role               String
+  last_login         DateTime?            @db.Timestamptz(6)
+  created_at         DateTime?            @db.Timestamptz(6)
+  clerk_id           String?
+  email              String
+  username           String?
+  pdpurl             String?
+  admin              admin?
+  consomateur        consomateur[]
+  partenaire_contact partenaire_contact[]
+  demande_partenaire demande_partenaire?
+
+  @@unique([clerk_id, email], map: "clerk_uniq")
+}
+
+enum demande_status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// A brand signing up as partner. The account (user.role = PARTNER) exists
+/// right away, but grants no access: a withyou collaborator must validate the
+/// request, which is when the partenaire_contact (and its marque) is created.
+model demande_partenaire {
+  id_demande    String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_usr        String             @unique @db.Uuid
+  nom_marque    String
+  /// Saisis à l'inscription, recopiés dans partenaire_contact à la validation.
+  prenom        String?
+  nom           String?
+  telephone     String?
+  status        demande_status     @default(PENDING)
+  created_at    DateTime           @default(now()) @db.Timestamptz(6)
+  resolved_at   DateTime?          @db.Timestamptz(6)
+  /// Dossier envoyé à withyou (documents complets). Null = la marque prépare encore son dossier.
+  submitted_at  DateTime?          @db.Timestamptz(6)
+  /// Message de withyou quand la demande est refusée ; la marque peut corriger et renvoyer.
+  message_refus String?
+  /// Points de la checklist de validation cochés par withyou (DOCUMENTS, VISITE, CHARTE, CONTRAT).
+  checks        String[]           @default([])
+  user          user               @relation(fields: [id_usr], references: [id_usr], onDelete: Cascade, onUpdate: NoAction)
+  documents     demande_document[]
+}
+
+/// Documents du dossier d'inscription d'une marque : registre du commerce,
+/// carte d'artisan, catalogue des produits…
+model demande_document {
+  id_document String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_demande  String             @db.Uuid
+  type        String
+  nom         String
+  url         String
+  taille      Int?
+  created_at  DateTime           @default(now()) @db.Timestamptz(6)
+  demande     demande_partenaire @relation(fields: [id_demande], references: [id_demande], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([id_demande])
+}
+
+model visage {
+  id_visage     String          @id @db.Uuid
+  nom           String
+  prenom        String
+  photo_url     String?
+  quote         String?
+  marque_visage marque_visage[]
+}
+
+/// Customer review on a product. Reviews are written by verified buyers;
+/// the brand can only add one public reply.
+model avis {
+  id_avis     String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_produit  String       @db.Uuid
+  id_marque   String       @db.Uuid
+  id_consumer String?      @db.Uuid
+  auteur      String
+  stars       Int
+  texte       String
+  skin_type   String?
+  verified    Boolean      @default(true)
+  reply       String?
+  replied_at  DateTime?    @db.Timestamptz(6)
+  created_at  DateTime     @default(now()) @db.Timestamptz(6)
+  produit     produit      @relation(fields: [id_produit], references: [id_product], onDelete: Cascade, onUpdate: NoAction)
+  marque      marque       @relation(fields: [id_marque], references: [id_marque], onDelete: Cascade, onUpdate: NoAction)
+  consomateur consomateur? @relation(fields: [id_consumer], references: [id_consumer], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([id_marque, created_at], map: "idx_avis_marque")
+}
+
+model promotion {
+  id_promotion String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_marque    String              @db.Uuid
+  nom          String
+  reduction    Int
+  date_debut   DateTime            @db.Date
+  date_fin     DateTime            @db.Date
+  utilisations Int                 @default(0)
+  created_at   DateTime            @default(now()) @db.Timestamptz(6)
+  marque       marque              @relation(fields: [id_marque], references: [id_marque], onDelete: Cascade, onUpdate: NoAction)
+  produits     promotion_produit[]
+}
+
+model promotion_produit {
+  id_promotion String    @db.Uuid
+  id_produit   String    @db.Uuid
+  promotion    promotion @relation(fields: [id_promotion], references: [id_promotion], onDelete: Cascade, onUpdate: NoAction)
+  produit      produit   @relation(fields: [id_produit], references: [id_product], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([id_promotion, id_produit])
+}
+
+enum placement_kind {
+  ROUTINE
+  HOME
+  BOX
+  INFLUENCE
+}
+
+/// A brand asking withyou for a paid/curated placement. withyou staff handle
+/// these from the admin console (later phase).
+model placement_request {
+  id_request String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_marque  String         @db.Uuid
+  kind       placement_kind
+  id_produit String?        @db.Uuid
+  status     String         @default("REQUESTED")
+  created_at DateTime       @default(now()) @db.Timestamptz(6)
+  marque     marque         @relation(fields: [id_marque], references: [id_marque], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// Partner salons that test brand products with their clients.
+model salon {
+  id_salon   String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nom        String
+  /// Coiffure, esthétique…
+  type       String       @default("")
+  wilaya     String
+  ville      String?
+  code       String       @unique
+  formee     Boolean      @default(false)
+  active     Boolean      @default(true)
+  created_at DateTime     @default(now()) @db.Timestamptz(6)
+  salon_test salon_test[]
+  telephone  String?
+}
+
+enum salon_test_status {
+  PENDING
+  RUNNING
+  DONE
+}
+
+model salon_test {
+  id_test          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_marque        String            @db.Uuid
+  id_produit       String            @db.Uuid
+  id_salon         String?           @db.Uuid
+  echantillons     Int
+  wilaya_souhaitee String?
+  question         String?
+  status           salon_test_status @default(PENDING)
+  testeuses        Int               @default(0)
+  score            Decimal?          @db.Decimal(2, 1)
+  citation         String?
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
+  marque           marque            @relation(fields: [id_marque], references: [id_marque], onDelete: Cascade, onUpdate: NoAction)
+  produit          produit           @relation(fields: [id_produit], references: [id_product], onDelete: Cascade, onUpdate: NoAction)
+  salon            salon?            @relation(fields: [id_salon], references: [id_salon], onDelete: SetNull, onUpdate: NoAction)
+}
+
+enum analytics_event_type {
+  PAGE_VIEW
+  PRODUCT_OPEN
+  PRODUCT_KEPT
+  SEARCH
+}
+
+/// Consumer behaviour events used for the brand analytics funnel. Purchases
+/// are NOT events: they come from order/ligne_order.
+model analytics_event {
+  id_event    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type        analytics_event_type
+  id_marque   String?              @db.Uuid
+  id_produit  String?              @db.Uuid
+  id_consumer String?              @db.Uuid
+  query       String?
+  skin_type   String?
+  wilaya      String?
+  created_at  DateTime             @default(now()) @db.Timestamptz(6)
+  marque      marque?              @relation(fields: [id_marque], references: [id_marque], onDelete: Cascade, onUpdate: NoAction)
+  produit     produit?             @relation(fields: [id_produit], references: [id_product], onDelete: Cascade, onUpdate: NoAction)
+  consomateur consomateur?         @relation(fields: [id_consumer], references: [id_consumer], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([id_marque, type, created_at], map: "idx_event_marque")
+}
+
+/// Service de livraison utilisable par withyou (ajouté depuis la console admin).
+/// livraison.prestatire reprend son nom.
+model transporteur {
+  id_transporteur String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nom             String   @unique
+  /// Wilayas desservies ; liste vide = les 58 wilayas.
+  wilayas         String[] @default([])
+  cout_colis      Decimal  @db.Decimal
+  /// Délai de livraison annoncé, en jours.
+  delai_jours     Decimal? @db.Decimal
+  telephone       String?
+  email           String?
+  actif           Boolean  @default(true)
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+}
+
+enum ticket_status {
+  OUVERT
+  REPONDU
+  RESOLU
+}
+
+/// Réclamation envoyée à un transporteur pour un colis en anomalie. Résoudre le
+/// ticket ferme l'incident de la commande.
+model ticket_transporteur {
+  id_ticket           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_order            String          @db.Uuid
+  id_incident         String?         @db.Uuid
+  transporteur        String
+  code_suivi          String?
+  motif               String
+  message             String
+  statut              ticket_status   @default(OUVERT)
+  opened_by           String          @db.Uuid
+  opened_at           DateTime        @default(now()) @db.Timestamptz(6)
+  reponse             String?
+  reponse_at          DateTime?       @db.Timestamptz(6)
+  relances            Int             @default(0)
+  derniere_relance_at DateTime?       @db.Timestamptz(6)
+  resolved_by         String?         @db.Uuid
+  resolved_at         DateTime?       @db.Timestamptz(6)
+  order               order           @relation(fields: [id_order], references: [id_order], onDelete: Cascade, onUpdate: NoAction)
+  incident            order_incident? @relation(fields: [id_incident], references: [id_incident], onDelete: SetNull, onUpdate: NoAction)
+  ouvert_par          admin           @relation("ticket_opened_by", fields: [opened_by], references: [id_admin], onDelete: NoAction, onUpdate: NoAction)
+  resolu_par          admin?          @relation("ticket_resolved_by", fields: [resolved_by], references: [id_admin], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([statut, opened_at])
+}
+
+/// Informations fiscales et bancaires d'une marque (sensibles : table à part,
+/// lue uniquement par la console admin).
+model marque_legal {
+  id_marque          String   @id @db.Uuid
+  nif                String?
+  nis                String?
+  rc                 String?
+  article_imposition String?
+  rib                String?
+  banque             String?
+  updated_at         DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  updated_by         String?  @db.Uuid
+  marque             marque   @relation(fields: [id_marque], references: [id_marque], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// Fonctionnalité de l'espace marque débloquée par une offre (null = offre sans écran dédié).
+enum fonctionnalite_payante {
+  ANALYTICS
+  PROMOTION
+}
+
+enum periode_abonnement {
+  MENSUEL
+  ANNUEL
+}
+
+enum statut_abonnement {
+  DEMANDE
+  ACTIF
+  REFUSE
+  ANNULE
+}
+
+/// Catalogue des abonnements que les marques peuvent prendre en plus de la commission.
+model offre_abonnement {
+  id_offre       String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nom            String                  @unique
+  description    String                  @default("")
+  fonctionnalite fonctionnalite_payante?
+  prix_mensuel   Decimal                 @db.Decimal
+  prix_annuel    Decimal?                @db.Decimal
+  /// Une offre inactive n'est plus proposée aux marques (les abonnements en cours continuent).
+  actif          Boolean                 @default(true)
+  created_at     DateTime                @default(now()) @db.Timestamptz(6)
+  abonnements    abonnement_marque[]
+}
+
+/// Abonnement d'une marque : demandé depuis son espace, activé par un admin après paiement.
+/// Actif tant que la date de fin n'est pas passée.
+model abonnement_marque {
+  id_abonnement String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_marque     String             @db.Uuid
+  id_offre      String             @db.Uuid
+  periode       periode_abonnement
+  /// Prix au moment de la demande (le catalogue peut changer ensuite).
+  prix          Decimal            @db.Decimal
+  statut        statut_abonnement  @default(DEMANDE)
+  demande_at    DateTime           @default(now()) @db.Timestamptz(6)
+  debut         DateTime?          @db.Timestamptz(6)
+  fin           DateTime?          @db.Timestamptz(6)
+  active_par    String?            @db.Uuid
+  message       String?
+  marque        marque             @relation(fields: [id_marque], references: [id_marque], onDelete: Cascade, onUpdate: NoAction)
+  offre         offre_abonnement   @relation(fields: [id_offre], references: [id_offre], onDelete: NoAction, onUpdate: NoAction)
+  admin         admin?             @relation("abonnement_active_par", fields: [active_par], references: [id_admin], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([id_marque, statut])
+}
+
+enum categorie_specialiste {
+  EXPERT
+  CREATRICE
+}
+
+/// Experts beauté (dermatologue, cosmétologue…) et créatrices de contenu qui
+/// travaillent avec withyou.
+model specialiste {
+  id_specialiste String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categorie      categorie_specialiste
+  prenom         String
+  nom            String
+  /// Métier (expert) ou type de contenu (créatrice).
+  role           String
+  wilaya         String
+  /// Mission (expert) ou marques accompagnées (créatrice).
+  description    String                @default("")
+  disponibilites String?
+  /// Audience d'une créatrice (ex. « 48 k abonnées »).
+  audience       String?
+  reseau         String?
+  telephone      String?
+  email          String?
+  actif          Boolean               @default(true)
+  created_at     DateTime              @default(now()) @db.Timestamptz(6)
+
+  @@index([categorie, actif])
+}
+
+enum box_statut {
+  PREPARATION
+  ASSEMBLEE
+  EXPEDIEE
+}
+
+enum box_candidature_statut {
+  NOUVELLE
+  RETENUE
+  REFUSEE
+}
+
+/// Box Rituel mensuelle envoyée aux clientes abonnées, une variante par type de peau.
+model box_rituel {
+  id_box          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nom             String
+  /// Premier jour du mois de la box.
+  mois            DateTime          @unique @db.Date
+  date_assemblage DateTime          @db.Date
+  date_expedition DateTime          @db.Date
+  statut          box_statut        @default(PREPARATION)
+  /// Données d'exemple (supprimables avec le script de démo).
+  demo            Boolean           @default(false)
+  created_at      DateTime          @default(now()) @db.Timestamptz(6)
+  variantes       box_variante[]
+  produits        box_produit[]
+  candidatures    box_candidature[]
+}
+
+/// Variante de la box pour un type de peau, avec le nombre d'abonnées prévu.
+model box_variante {
+  id_variante String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_box      String     @db.Uuid
+  type_peau   String
+  abonnees    Int        @default(0)
+  box         box_rituel @relation(fields: [id_box], references: [id_box], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([id_box, type_peau])
+}
+
+/// Produit à réunir pour une box : quantité nécessaire (abonnées des variantes
+/// concernées) et quantité confirmée par la marque.
+model box_produit {
+  id_box_produit      String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_box              String     @db.Uuid
+  /// Produit du catalogue, s'il y est ; sinon seulement nommé.
+  id_produit          String?    @db.Uuid
+  nom_produit         String
+  marque              String
+  /// Types de peau des variantes qui reçoivent ce produit.
+  variantes           String[]
+  quantite_necessaire Int
+  quantite_confirmee  Int        @default(0)
+  /// La marque a répondu (même avec 0) ; sinon « sans réponse ».
+  marque_a_repondu    Boolean    @default(false)
+  relance_at          DateTime?  @db.Timestamptz(6)
+  box                 box_rituel @relation(fields: [id_box], references: [id_box], onDelete: Cascade, onUpdate: NoAction)
+  produit             produit?   @relation(fields: [id_produit], references: [id_product], onDelete: SetNull, onUpdate: NoAction)
+}
+
+/// Produit proposé par une marque pour une prochaine box.
+model box_candidature {
+  id_candidature String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id_box         String                 @db.Uuid
+  id_marque      String?                @db.Uuid
+  marque         String
+  nom_produit    String
+  variante       String
+  statut         box_candidature_statut @default(NOUVELLE)
+  created_at     DateTime               @default(now()) @db.Timestamptz(6)
+  box            box_rituel             @relation(fields: [id_box], references: [id_box], onDelete: Cascade, onUpdate: NoAction)
+  marque_ref     marque?                @relation(fields: [id_marque], references: [id_marque], onDelete: SetNull, onUpdate: NoAction)
 }

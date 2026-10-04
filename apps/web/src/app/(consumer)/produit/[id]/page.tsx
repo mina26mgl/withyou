@@ -1,12 +1,58 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getProductById } from "@/lib/productsData";
+import Link from "next/link";
+import type { PublicProductDetail } from "@withyou/shared-types";
+import { DOCUMENT_LABEL } from "@/lib/productDocuments";
+import { keyIngredientFor, SKIN_TYPE_IMAGES } from "@/lib/keyIngredients";
+import { api, ApiError } from "@/lib/api";
 import BottomNav from "@/components/layout/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Star, ShoppingBag } from "lucide-react";
-import PanierPage from "../../panier/page";
+import { addToTrousse } from "@/lib/trousse";
+import { recordExploration } from "@/lib/parcours";
 const TABS = ["Pour qui c'est", "Aperçu", "Ingrédients", "Avis"] as const;
+
+const SECTION_TEXT: React.CSSProperties = { fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 400, color: "#667085", lineHeight: "20px", margin: 0 };
+
+const MOMENT_LABEL: Record<string, string> = { Matin: "le matin", Soir: "le soir", "Les deux": "matin et soir" };
+
+/** Durée après ouverture (en jours) lisible : « 24 mois », « 45 jours ». */
+function formatDuree(jours: number | null): string | null {
+  if (!jours) return null;
+  return jours % 30 === 0 ? `${jours / 30} mois` : `${jours} jours`;
+}
+
+/** Carte illustrée (type de peau, ingrédient phare) ; sans illustration, le nom seul. */
+function IllustratedCard({ label, image }: { label: string; image?: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", minHeight: image ? 119 : undefined, width: 105.67, padding: 12, boxSizing: "border-box" }}>
+      <p title={label} style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "rgba(3, 26, 6, 1)", lineHeight: "20px", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {label}
+      </p>
+      {image && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={image}
+          alt=""
+          style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", backgroundColor: "rgba(246, 250, 247, 1)" }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ChipList({ items }: { items: string[] }) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+      {items.map((item) => (
+        <span key={item} style={{ fontFamily: "Inter, sans-serif", fontSize: 13, color: "#07320D", borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", background: "#F6FAF7", padding: "6px 12px" }}>
+          {item}
+        </span>
+      ))}
+    </div>
+  );
+}
 type Tab = (typeof TABS)[number];
 
 function AzulImage({ src }: { src: string }) {
@@ -42,7 +88,27 @@ export default function ProduitPage() {
   const ingredientsRef = useRef<HTMLDivElement>(null);
   const avisRef = useRef<HTMLDivElement>(null);
 
-  const product = getProductById(id);
+  // undefined : chargement ; null : produit introuvable ou pas en ligne.
+  const [product, setProduct] = useState<PublicProductDetail | null | undefined>(undefined);
+  const [activeImage, setActiveImage] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<PublicProductDetail>(`/produits/${id}`)
+      .then((p) => {
+        if (cancelled) return;
+        setProduct(p);
+        recordExploration(`produit:${p.id}`);
+      })
+      .catch((err) => {
+        if (!(err instanceof ApiError && err.status === 404)) console.error("Produit indisponible:", err);
+        if (!cancelled) setProduct(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const scrollToSection = (tab: Tab) => {
     setActiveTab(tab);
@@ -54,6 +120,14 @@ export default function ProduitPage() {
     };
     map[tab].current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
+  if (product === undefined) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p style={{ fontFamily: "Inter, sans-serif", color: "#667085" }}>Chargement…</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -68,6 +142,9 @@ export default function ProduitPage() {
       </div>
     );
   }
+
+  // Ingrédients phares illustrés (miel, aloe vera…) parmi la liste INCI.
+  const keyIngredients = product.ingredients.map(keyIngredientFor).filter((k) => k !== null);
 
   return (
     <div
@@ -115,7 +192,7 @@ export default function ProduitPage() {
           {/* Marque + cachet */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              {product.brandLogo && (
+              {product.marque.logoUrl && (
                 <div
                   style={{
                     width: 36,
@@ -128,14 +205,14 @@ export default function ProduitPage() {
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={product.brandLogo}
-                    alt={product.brand}
+                    src={product.marque.logoUrl}
+                    alt={product.marque.nom}
                     style={{ width: "100%", height: "100%", objectFit: "contain" }}
                   />
                 </div>
               )}
               <span style={{ fontFamily: "Inter, sans-serif", fontSize: 14, fontWeight: 400, color: "#07320D" }}>
-                {product.brand}
+                {product.marque.nom}
               </span>
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -162,7 +239,7 @@ export default function ProduitPage() {
               lineHeight: "26px",
             }}
           >
-            {product.name}
+            {product.nom}
           </h1>
 
           {/* Image principale */}
@@ -176,12 +253,16 @@ export default function ProduitPage() {
               boxShadow: "1px 1px 3px 1px rgba(0,0,0,0.04), 4px 4px 6px 0px rgba(0,0,0,0.03)",
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={product.image}
-              alt={product.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-            />
+            {product.imagesUrls[activeImage] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={product.imagesUrls[activeImage]}
+                alt={product.nom}
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+            ) : (
+              <div style={{ width: "100%", height: "100%", background: "#EAF6EE" }} />
+            )}
             <div
               className="absolute pointer-events-none"
               style={{
@@ -200,19 +281,56 @@ export default function ProduitPage() {
 
           {/* Vignettes */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={product.image}
-              alt=""
-              style={{ width: 40, height: 40, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0 }}
-            />
-            <AzulImage src="/azul1.png" />
-            <AzulImage src="/azul2.png" />
-            <AzulImage src="/azul3.png" />
-            <AzulImage src="/azul4.png" />
-            <AzulImage src="/azul5.png" />
+            {product.imagesUrls.length > 1 &&
+              product.imagesUrls.map((url, i) => (
+                <button
+                  key={url}
+                  type="button"
+                  onClick={() => setActiveImage(i)}
+                  aria-label={`Photo ${i + 1}`}
+                  style={{ padding: 0, border: "none", background: "none", cursor: "pointer", opacity: i === activeImage ? 1 : 0.6 }}
+                >
+                  <AzulImage src={url} />
+                </button>
+              ))}
           </div>
         </div>
+
+        {/* Pack : produits qu'il contient et économie par rapport à l'achat séparé */}
+        {product.isPack && product.packItems.length > 0 && (
+          <div style={{ margin: "0 16px 4px", padding: 16, border: "1px solid rgba(0, 0, 0, 0.08)", borderRadius: 24 }}>
+            <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: 14, fontWeight: 600, color: "#101828", margin: "0 0 12px 0" }}>
+              Ce pack contient
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {product.packItems.map((item) => (
+                <Link
+                  key={item.produitId}
+                  href={`/produit/${item.produitId}`}
+                  style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}
+                >
+                  <div style={{ width: 48, height: 48, borderRadius: 12, overflow: "hidden", border: "0.5px solid rgba(0,0,0,0.1)", flexShrink: 0, background: "#F6FAF7" }}>
+                    {item.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : null}
+                  </div>
+                  <p style={{ ...SECTION_TEXT, color: "#101828", flex: 1 }}>
+                    {item.quantite > 1 ? <strong>{item.quantite} × </strong> : null}
+                    {item.nom}
+                  </p>
+                  <span style={{ ...SECTION_TEXT, whiteSpace: "nowrap" }}>{item.prix.toLocaleString("fr-DZ")} Dzd</span>
+                </Link>
+              ))}
+            </div>
+            {product.packValeur != null && product.packValeur > product.prix && (
+              <p style={{ ...SECTION_TEXT, marginTop: 12, color: "#07320D" }}>
+                Achetés séparément : <s>{product.packValeur.toLocaleString("fr-DZ")} Dzd</s> · vous économisez{" "}
+                <strong>{(product.packValeur - product.prix).toLocaleString("fr-DZ")} Dzd</strong>
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Tab bar — sticky */}
         <div
@@ -273,110 +391,29 @@ export default function ProduitPage() {
           <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: 14, fontWeight: 600, color: "#101828", margin: "0 0 8px 0" }}>
             Pour qui c&apos;est
           </h2>
-          <div className="absolute pointer-events-none" style={{ right: 20, bottom: 320, width: 33, height: 55, transform: "rotate(240.0deg)", transformOrigin: "center center" }}>
+          <div className="absolute pointer-events-none" style={{ right: 20, top: 4, width: 33, height: 55, transform: "rotate(240.0deg)", transformOrigin: "center center" }}>
             <img src="/rose.png" alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
-          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 400, color: "#667085", lineHeight: "20px", margin: 0 }}>
-            For skin that gets oily by midday but still feels tight around the cheeks.
-          </p>
-          <div style={{ display: "flex", alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 12 }}>
-            <div style={{ gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", height: 119, width: 105.66666412353516, padding: 12 }}>
-              <p
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "rgba(3, 26, 6, 1)",
-                  lineHeight: "20px",
-                  margin: 0,
-                  // AJOUTS POUR L'ELLIPSIS :
-                  whiteSpace: "nowrap",      // Empêche le texte de s'écrire sur plusieurs lignes
-                  overflow: "hidden",        // Cache le texte qui dépasse de la div de 105px
-                  textOverflow: "ellipsis",  // Ajoute les fameux "..." à la fin
-                  width: "100%",             // Force le paragraphe à prendre la largeur de son parent
-                }}
-              >
-                Sensitive Skin
-              </p>
-              <img
-                src="/sensetiv.png"
-                alt=""
-                style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0, backgroundColor: "rgba(246, 250, 247, 1)", boxShadow: "1px 1px 3px 0px rgba(0, 0, 0, 0.04), 4px 4px 6px 0px rgba(0, 0, 0, 0.03),9px 9px 8px 0px rgba(0, 0, 0, 0.02),16px 17px 9px 0px rgba(0, 0, 0, 0.01),24px 26px 10px 0px rgba(0, 0, 0, 0)" }}
-              />
+          {product.skinTypes.length > 0 ? (
+            <div style={{ display: "flex", alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 4 }}>
+              {product.skinTypes.map((skin) => (
+                <IllustratedCard key={skin} label={`Peau ${skin.toLowerCase()}`} image={SKIN_TYPE_IMAGES[skin]} />
+              ))}
             </div>
-            <div style={{ gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", height: 119, width: 105.66666412353516, padding: 12 }}>
-              <p
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "rgba(3, 26, 6, 1)",
-                  lineHeight: "20px",
-                  margin: 0,
-                  // AJOUTS POUR L'ELLIPSIS :
-                  whiteSpace: "nowrap",      // Empêche le texte de s'écrire sur plusieurs lignes
-                  overflow: "hidden",        // Cache le texte qui dépasse de la div de 105px
-                  textOverflow: "ellipsis",  // Ajoute les fameux "..." à la fin
-                  width: "100%",             // Force le paragraphe à prendre la largeur de son parent
-                }}
-              >
-                Oily Skin
-              </p>
-              <img
-                src="/oily-skin.png"
-                alt=""
-                style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0, backgroundColor: "rgba(246, 250, 247, 1)", boxShadow: "1px 1px 3px 0px rgba(0, 0, 0, 0.04), 4px 4px 6px 0px rgba(0, 0, 0, 0.03),9px 9px 8px 0px rgba(0, 0, 0, 0.02),16px 17px 9px 0px rgba(0, 0, 0, 0.01),24px 26px 10px 0px rgba(0, 0, 0, 0)" }}
-              />
-            </div>
-            <div style={{ gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", height: 119, width: 105.66666412353516, padding: 12 }}>
-              <p
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "rgba(3, 26, 6, 1)",
-                  lineHeight: "20px",
-                  margin: 0,
-                  // AJOUTS POUR L'ELLIPSIS :
-                  whiteSpace: "nowrap",      // Empêche le texte de s'écrire sur plusieurs lignes
-                  overflow: "hidden",        // Cache le texte qui dépasse de la div de 105px
-                  textOverflow: "ellipsis",  // Ajoute les fameux "..." à la fin
-                  width: "100%",             // Force le paragraphe à prendre la largeur de son parent
-                }}
-              >
-                Acne-Prone Skin
-              </p>
-              <img
-                src="/acne-skin.png"
-                alt=""
-                style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0, backgroundColor: "rgba(246, 250, 247, 1)", boxShadow: "1px 1px 3px 0px rgba(0, 0, 0, 0.04), 4px 4px 6px 0px rgba(0, 0, 0, 0.03),9px 9px 8px 0px rgba(0, 0, 0, 0.02),16px 17px 9px 0px rgba(0, 0, 0, 0.01),24px 26px 10px 0px rgba(0, 0, 0, 0)" }}
-              />
-            </div>
-            <div style={{ gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", height: 119, width: 105.66666412353516, padding: 12 }}>
-              <p
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "rgba(3, 26, 6, 1)",
-                  lineHeight: "20px",
-                  margin: 0,
-                  // AJOUTS POUR L'ELLIPSIS :
-                  whiteSpace: "nowrap",      // Empêche le texte de s'écrire sur plusieurs lignes
-                  overflow: "hidden",        // Cache le texte qui dépasse de la div de 105px
-                  textOverflow: "ellipsis",  // Ajoute les fameux "..." à la fin
-                  width: "100%",             // Force le paragraphe à prendre la largeur de son parent
-                }}
-              >
-                Mixed Skin
-              </p>
-              <img
-                src="/mixte.png"
-                alt=""
-                style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0, backgroundColor: "rgba(246, 250, 247, 1)", boxShadow: "1px 1px 3px 0px rgba(0, 0, 0, 0.04), 4px 4px 6px 0px rgba(0, 0, 0, 0.03),9px 9px 8px 0px rgba(0, 0, 0, 0.02),16px 17px 9px 0px rgba(0, 0, 0, 0.01),24px 26px 10px 0px rgba(0, 0, 0, 0)" }}
-              />
-            </div>
-          </div>
+          ) : (
+            <p style={SECTION_TEXT}>Convient à tous les types de peau.</p>
+          )}
+          {product.needs.length > 0 && (
+            <>
+              <p style={{ ...SECTION_TEXT, marginTop: 16 }}>Répond à ces besoins :</p>
+              <ChipList items={product.needs} />
+            </>
+          )}
+          {product.moment && (
+            <p style={{ ...SECTION_TEXT, marginTop: 16 }}>
+              À utiliser : <strong style={{ color: "#101828" }}>{MOMENT_LABEL[product.moment] ?? product.moment}</strong>
+            </p>
+          )}
         </div>
 
         {/* Section: Aperçu */}
@@ -387,6 +424,38 @@ export default function ProduitPage() {
           <p style={{ fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 400, color: "#667085", lineHeight: "20px", margin: 0 }}>
             {product.description}
           </p>
+          <dl style={{ margin: "16px 0 0", display: "grid", gridTemplateColumns: "auto 1fr", gap: "8px 16px" }}>
+            {(
+              [
+                ["Catégorie", product.categorie],
+                ["Contenance", product.size],
+                ["Conservation", product.modesConservation.join(" · ") || null],
+                ["Après ouverture", formatDuree(product.dureeConservationJours)],
+              ] as [string, string | null][]
+            )
+              .filter((row): row is [string, string] => Boolean(row[1]))
+              .map(([label, value]) => (
+                <div key={label} style={{ display: "contents" }}>
+                  <dt style={{ ...SECTION_TEXT, color: "#101828", fontWeight: 500 }}>{label}</dt>
+                  <dd style={{ ...SECTION_TEXT, margin: 0 }}>{value}</dd>
+                </div>
+              ))}
+          </dl>
+          {product.documents.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
+              {product.documents.map((doc) => (
+                <a
+                  key={doc.url}
+                  href={doc.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ ...SECTION_TEXT, color: "#07320D", fontWeight: 600, textDecoration: "underline" }}
+                >
+                  {DOCUMENT_LABEL[doc.type] ?? "Document"} · {doc.nom}
+                </a>
+              ))}
+            </div>
+          )}
 
         </div>
 
@@ -395,200 +464,23 @@ export default function ProduitPage() {
           <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: 14, fontWeight: 600, color: "#101828", margin: "0 0 8px 0" }}>
             Ingrédients
           </h2>
-          <div style={{ display: "flex", alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 12 }}>
-            <div style={{ gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", height: 119, width: 105.66666412353516, padding: 12 }}>
-              <p
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "rgba(3, 26, 6, 1)",
-                  lineHeight: "20px",
-                  margin: 0,
-                  // AJOUTS POUR L'ELLIPSIS :
-                  whiteSpace: "nowrap",      // Empêche le texte de s'écrire sur plusieurs lignes
-                  overflow: "hidden",        // Cache le texte qui dépasse de la div de 105px
-                  textOverflow: "ellipsis",  // Ajoute les fameux "..." à la fin
-                  width: "100%",             // Force le paragraphe à prendre la largeur de son parent
-                }}
-              >
-                Miel
-              </p>
-              <img
-                src="/honey.png"
-                alt=""
-                style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0, backgroundColor: "rgba(246, 250, 247, 1)", boxShadow: "1px 1px 3px 0px rgba(0, 0, 0, 0.04), 4px 4px 6px 0px rgba(0, 0, 0, 0.03),9px 9px 8px 0px rgba(0, 0, 0, 0.02),16px 17px 9px 0px rgba(0, 0, 0, 0.01),24px 26px 10px 0px rgba(0, 0, 0, 0)" }}
-              />
-            </div>
-            <div style={{ gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", height: 119, width: 105.66666412353516, padding: 12 }}>
-              <p
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "rgba(3, 26, 6, 1)",
-                  lineHeight: "20px",
-                  margin: 0,
-                  // AJOUTS POUR L'ELLIPSIS :
-                  whiteSpace: "nowrap",      // Empêche le texte de s'écrire sur plusieurs lignes
-                  overflow: "hidden",        // Cache le texte qui dépasse de la div de 105px
-                  textOverflow: "ellipsis",  // Ajoute les fameux "..." à la fin
-                  width: "100%",             // Force le paragraphe à prendre la largeur de son parent
-                }}
-              >
-                Acide glycolic
-              </p>
-              <img
-                src="/glycolic.png"
-                alt=""
-                style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0, backgroundColor: "rgba(246, 250, 247, 1)", boxShadow: "1px 1px 3px 0px rgba(0, 0, 0, 0.04), 4px 4px 6px 0px rgba(0, 0, 0, 0.03),9px 9px 8px 0px rgba(0, 0, 0, 0.02),16px 17px 9px 0px rgba(0, 0, 0, 0.01),24px 26px 10px 0px rgba(0, 0, 0, 0)" }}
-              />
-            </div>
-            <div style={{ gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", height: 119, width: 105.66666412353516, padding: 12 }}>
-              <p
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "rgba(3, 26, 6, 1)",
-                  lineHeight: "20px",
-                  margin: 0,
-                  // AJOUTS POUR L'ELLIPSIS :
-                  whiteSpace: "nowrap",      // Empêche le texte de s'écrire sur plusieurs lignes
-                  overflow: "hidden",        // Cache le texte qui dépasse de la div de 105px
-                  textOverflow: "ellipsis",  // Ajoute les fameux "..." à la fin
-                  width: "100%",             // Force le paragraphe à prendre la largeur de son parent
-                }}
-              >
-                Aloe Vera
-              </p>
-              <img
-                src="/aloevera.png"
-                alt=""
-                style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0, backgroundColor: "rgba(246, 250, 247, 1)", boxShadow: "1px 1px 3px 0px rgba(0, 0, 0, 0.04), 4px 4px 6px 0px rgba(0, 0, 0, 0.03),9px 9px 8px 0px rgba(0, 0, 0, 0.02),16px 17px 9px 0px rgba(0, 0, 0, 0.01),24px 26px 10px 0px rgba(0, 0, 0, 0)" }}
-              />
-            </div>
-            <div style={{ gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", height: 119, width: 105.66666412353516, padding: 12 }}>
-              <p
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "rgba(3, 26, 6, 1)",
-                  lineHeight: "20px",
-                  margin: 0,
-                  // AJOUTS POUR L'ELLIPSIS :
-                  whiteSpace: "nowrap",      // Empêche le texte de s'écrire sur plusieurs lignes
-                  overflow: "hidden",        // Cache le texte qui dépasse de la div de 105px
-                  textOverflow: "ellipsis",  // Ajoute les fameux "..." à la fin
-                  width: "100%",             // Force le paragraphe à prendre la largeur de son parent
-                }}
-              >
-                Lavender
-              </p>
-              <img
-                src="/lavendre.png"
-                alt=""
-                style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0, backgroundColor: "rgba(246, 250, 247, 1)", boxShadow: "1px 1px 3px 0px rgba(0, 0, 0, 0.04), 4px 4px 6px 0px rgba(0, 0, 0, 0.03),9px 9px 8px 0px rgba(0, 0, 0, 0.02),16px 17px 9px 0px rgba(0, 0, 0, 0.01),24px 26px 10px 0px rgba(0, 0, 0, 0)" }}
-              />
-            </div>
-            <div style={{ gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", height: 119, width: 105.66666412353516, padding: 12 }}>
-              <p
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "rgba(3, 26, 6, 1)",
-                  lineHeight: "20px",
-                  margin: 0,
-                  // AJOUTS POUR L'ELLIPSIS :
-                  whiteSpace: "nowrap",      // Empêche le texte de s'écrire sur plusieurs lignes
-                  overflow: "hidden",        // Cache le texte qui dépasse de la div de 105px
-                  textOverflow: "ellipsis",  // Ajoute les fameux "..." à la fin
-                  width: "100%",             // Force le paragraphe à prendre la largeur de son parent
-                }}
-              >
-                Grain de café
-              </p>
-              <img
-                src="/coffee.png"
-                alt=""
-                style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0, backgroundColor: "rgba(246, 250, 247, 1)", boxShadow: "1px 1px 3px 0px rgba(0, 0, 0, 0.04), 4px 4px 6px 0px rgba(0, 0, 0, 0.03),9px 9px 8px 0px rgba(0, 0, 0, 0.02),16px 17px 9px 0px rgba(0, 0, 0, 0.01),24px 26px 10px 0px rgba(0, 0, 0, 0)" }}
-              />
-            </div>
-            <div style={{ gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", height: 119, width: 105.66666412353516, padding: 12 }}>
-              <p
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "rgba(3, 26, 6, 1)",
-                  lineHeight: "20px",
-                  margin: 0,
-                  // AJOUTS POUR L'ELLIPSIS :
-                  whiteSpace: "nowrap",      // Empêche le texte de s'écrire sur plusieurs lignes
-                  overflow: "hidden",        // Cache le texte qui dépasse de la div de 105px
-                  textOverflow: "ellipsis",  // Ajoute les fameux "..." à la fin
-                  width: "100%",             // Force le paragraphe à prendre la largeur de son parent
-                }}
-              >
-                Prickly seed
-              </p>
-              <img
-                src="/prickly.png"
-                alt=""
-                style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0, backgroundColor: "rgba(246, 250, 247, 1)", boxShadow: "1px 1px 3px 0px rgba(0, 0, 0, 0.04), 4px 4px 6px 0px rgba(0, 0, 0, 0.03),9px 9px 8px 0px rgba(0, 0, 0, 0.02),16px 17px 9px 0px rgba(0, 0, 0, 0.01),24px 26px 10px 0px rgba(0, 0, 0, 0)" }}
-              />
-            </div>
-            <div style={{ gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", height: 119, width: 105.66666412353516, padding: 12 }}>
-              <p
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "rgba(3, 26, 6, 1)",
-                  lineHeight: "20px",
-                  margin: 0,
-                  // AJOUTS POUR L'ELLIPSIS :
-                  whiteSpace: "nowrap",      // Empêche le texte de s'écrire sur plusieurs lignes
-                  overflow: "hidden",        // Cache le texte qui dépasse de la div de 105px
-                  textOverflow: "ellipsis",  // Ajoute les fameux "..." à la fin
-                  width: "100%",             // Force le paragraphe à prendre la largeur de son parent
-                }}
-              >
-                Huile d'olive
-              </p>
-              <img
-                src="/huileolive.png"
-                alt=""
-                style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0, backgroundColor: "rgba(246, 250, 247, 1)", boxShadow: "1px 1px 3px 0px rgba(0, 0, 0, 0.04), 4px 4px 6px 0px rgba(0, 0, 0, 0.03),9px 9px 8px 0px rgba(0, 0, 0, 0.02),16px 17px 9px 0px rgba(0, 0, 0, 0.01),24px 26px 10px 0px rgba(0, 0, 0, 0)" }}
-              />
-            </div>
-            <div style={{ gap: 8, borderRadius: 24, border: "1px solid rgba(0,0,0,0.08)", height: 119, width: 105.66666412353516, padding: 12 }}>
-              <p
-                style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  fontWeight: 400,
-                  color: "rgba(3, 26, 6, 1)",
-                  lineHeight: "20px",
-                  margin: 0,
-                  // AJOUTS POUR L'ELLIPSIS :
-                  whiteSpace: "nowrap",      // Empêche le texte de s'écrire sur plusieurs lignes
-                  overflow: "hidden",        // Cache le texte qui dépasse de la div de 105px
-                  textOverflow: "ellipsis",  // Ajoute les fameux "..." à la fin
-                  width: "100%",             // Force le paragraphe à prendre la largeur de son parent
-                }}
-              >
-                Jasmine
-              </p>
-              <img
-                src="/jasmine.png"
-                alt=""
-                style={{ width: 81.67, height: 70, borderRadius: 12, border: "0.2px solid rgba(0,0,0,0.1)", objectFit: "contain", flexShrink: 0, backgroundColor: "rgba(246, 250, 247, 1)", boxShadow: "1px 1px 3px 0px rgba(0, 0, 0, 0.04), 4px 4px 6px 0px rgba(0, 0, 0, 0.03),9px 9px 8px 0px rgba(0, 0, 0, 0.02),16px 17px 9px 0px rgba(0, 0, 0, 0.01),24px 26px 10px 0px rgba(0, 0, 0, 0)" }}
-              />
-            </div>
-          </div>
+          {product.ingredients.length > 0 ? (
+            <>
+              {keyIngredients.length > 0 && (
+                <div style={{ display: "flex", alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 12 }}>
+                  {keyIngredients.map((k) => (
+                    <IllustratedCard key={k.inci} label={k.label} image={k.image} />
+                  ))}
+                </div>
+              )}
+              <p style={{ ...SECTION_TEXT, marginTop: 16 }}>Composition complète (INCI) :</p>
+              <p style={{ ...SECTION_TEXT, color: "#101828", marginTop: 4 }}>{product.ingredients.join(", ")}</p>
+            </>
+          ) : (
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "#667085", margin: "12px 0 0" }}>
+              Composition non renseignée.
+            </p>
+          )}
         </div>
 
         {/* Section: Avis */}
@@ -597,80 +489,38 @@ export default function ProduitPage() {
             Avis
           </h2>
 
-          <div style={{ display: "flex", flexDirection: "column", marginTop: 12, padding: "16px", border: "1px solid rgba(0, 0, 0, 0.08)", borderRadius: 24 }}>
-
-            {/* CONTENEUR PRINCIPAL EN LIGNE (Avatar à gauche, tout le reste à droite) */}
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-
-              {/* 1. L'Avatar à gauche */}
-              <div style={{ width: 72, height: 72, borderRadius: "12px", overflow: "hidden", border: "1.07px solid rgba(255, 255, 255, 1)", flexShrink: 0 }}>
-                <img src="/Avatar.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              </div>
-
-              {/* 2. Tout le bloc de droite (Nom + Étoiles ET Commentaire) */}
-              <div style={{ display: "flex", flexDirection: "column", flexGrow: 1, gap: 6 }}>
-
-                {/* Ligne du haut : Nom + Étoiles */}
-                <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          {product.avisStats && (
+            <p style={SECTION_TEXT}>
+              {product.avisStats.average.toFixed(1)} / 5 · {product.avisStats.count} avis vérifié{product.avisStats.count > 1 ? "s" : ""}
+            </p>
+          )}
+          {product.avis.length === 0 ? (
+            <p style={SECTION_TEXT}>Pas encore d&apos;avis sur ce produit.</p>
+          ) : (
+            product.avis.map((review) => (
+              <div key={review.id} style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12, padding: "16px", border: "1px solid rgba(0, 0, 0, 0.08)", borderRadius: 24 }}>
+                <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                   <p style={{ fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 600, color: "#101828", margin: 0 }}>
-                    Asma Khe
+                    {review.auteur}
+                    {review.skinType ? <span style={{ fontWeight: 400, color: "#667085" }}> · peau {review.skinType.toLowerCase()}</span> : null}
                   </p>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <Star className="w-4 h-4 fill-[#4CA30D] stroke-[#4CA30D]" />
-                    <Star className="w-4 h-4 fill-[#4CA30D] stroke-[#4CA30D]" />
-                    <Star className="w-4 h-4 fill-[#4CA30D] stroke-[#4CA30D]" />
-                    <Star className="w-4 h-4 fill-[#4CA30D] stroke-[#4CA30D]" />
-                    <Star className="w-4 h-4 stroke-[#4CA30D]" />
+                  <div style={{ display: "flex", gap: 4 }} aria-label={`${review.stars} étoiles sur 5`}>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star key={n} className={`w-4 h-4 stroke-[#4CA30D] ${n <= review.stars ? "fill-[#4CA30D]" : ""}`} />
+                    ))}
                   </div>
                 </div>
-
-                {/* Le commentaire est maintenant ici, juste en dessous du nom, mais TOUJOURS à côté de l'avatar */}
                 <p style={{ fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 400, color: "rgba(77, 101, 81, 1)", lineHeight: "20px", margin: 0 }}>
-                  J&apos;ai adoré ce produit ! Il a vraiment amélioré l&apos;aspect de ma peau et je le recommande vivement.
+                  {review.texte}
                 </p>
-
-              </div>
-
-            </div>
-
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", marginTop: 12, padding: "16px", border: "1px solid rgba(0, 0, 0, 0.08)", borderRadius: 24 }}>
-
-            {/* CONTENEUR PRINCIPAL EN LIGNE (Avatar à gauche, tout le reste à droite) */}
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-
-              {/* 1. L'Avatar à gauche */}
-              <div style={{ width: 72, height: 72, borderRadius: "12px", overflow: "hidden", border: "1.07px solid rgba(255, 255, 255, 1)", flexShrink: 0 }}>
-                <img src="/Avatar.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              </div>
-
-              {/* 2. Tout le bloc de droite (Nom + Étoiles ET Commentaire) */}
-              <div style={{ display: "flex", flexDirection: "column", flexGrow: 1, gap: 6 }}>
-
-                {/* Ligne du haut : Nom + Étoiles */}
-                <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <p style={{ fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 600, color: "#101828", margin: 0 }}>
-                    Asma Khe
+                {review.reply && (
+                  <p style={{ ...SECTION_TEXT, marginTop: 4, paddingLeft: 12, borderLeft: "2px solid #DCE8DF" }}>
+                    <strong style={{ color: "#07320D" }}>{product.marque.nom} :</strong> {review.reply}
                   </p>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <Star className="w-4 h-4 fill-[#4CA30D] stroke-[#4CA30D]" />
-                    <Star className="w-4 h-4 fill-[#4CA30D] stroke-[#4CA30D]" />
-                    <Star className="w-4 h-4 fill-[#4CA30D] stroke-[#4CA30D]" />
-                    <Star className="w-4 h-4 fill-[#4CA30D] stroke-[#4CA30D]" />
-                    <Star className="w-4 h-4 stroke-[#4CA30D]" />
-                  </div>
-                </div>
-
-                {/* Le commentaire est maintenant ici, juste en dessous du nom, mais TOUJOURS à côté de l'avatar */}
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 400, color: "rgba(77, 101, 81, 1)", lineHeight: "20px", margin: 0 }}>
-                  J&apos;ai adoré ce produit ! Il a vraiment amélioré l&apos;aspect de ma peau et je le recommande vivement.
-                </p>
-
+                )}
               </div>
-
-            </div>
-
-          </div>
+            ))
+          )}
         </div>
 
         {/* CTA */}
@@ -680,11 +530,15 @@ export default function ProduitPage() {
           {/* BLOC PRIX : Supprimé le marginTop inutile et flexShrink pour bloquer sa taille */}
           <div style={{ flexShrink: 0, borderRadius: 16, border: "0.5px solid #00000014", padding: "8px 16px" }}>
             <p style={{ fontFamily: "Inter, sans-serif", fontSize: 16, fontWeight: 400, color: "#101828", margin: 0, whiteSpace: "nowrap" }}>
-              2800 Dzd
+              {product.prix.toLocaleString("fr-DZ")} Dzd
             </p>
           </div>
           <button
-            onClick={() => setShowConfirmation(true)}
+            onClick={() => {
+              addToTrousse(product);
+              setShowConfirmation(true);
+            }}
+            disabled={!product.enStock}
             style={{
               flexGrow: 1,
               height: 48,
@@ -706,7 +560,7 @@ export default function ProduitPage() {
             }}
           >
             <ShoppingBag />
-            Ajouter à ma trousse
+            {product.enStock ? "Ajouter à ma trousse" : "Bientôt de retour"}
           </button>
 
 

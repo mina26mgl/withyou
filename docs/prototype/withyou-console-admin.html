@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>withyou – Console admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#FAFCFD;--card:#FFFFFF;--ink:#1F2B24;--muted:#6B7A71;--line:#E6ECEA;
+  --heading:#173A24;--green:#173A24;--green-2:#24523A;--on-green:#FFFFFF;
+  --leaf:#3A9A5E;--leaf-bg:#EAF6EE;--sky1:#D3E9F2;--sky2:#F1F8FA;--soft:#EEF6F8;--cloud:rgba(255,255,255,.85);
+  --warn:#9A6414;--warn-bg:#FBF0DA;--danger:#B23F36;--danger-bg:#F9E2DF;--info:#2B6982;--info-bg:#E4EFF4;--star:#D4A02F;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.serif{font-family:'DM Serif Display',Georgia,'Times New Roman',serif;font-weight:400;color:var(--heading);margin:0}
+h1{font-size:clamp(28px,3.2vw,40px);line-height:1.08}
+h2{font-size:22px;line-height:1.2}
+h3{font-size:18px;line-height:1.25}
+img{max-width:100%}
+button{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+
+/* Layout */
+.app{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100%}
+.side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:24px 14px;border-right:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;gap:20px}
+.wordmark{font-family:'DM Serif Display',Georgia,serif;font-size:30px;line-height:1;color:var(--heading);text-decoration:none;padding:0 10px}
+.wordmark small{display:block;font-family:'Figtree',system-ui,sans-serif;font-size:12.5px;color:var(--muted);margin-top:6px}
+.brandbox{display:flex;align-items:center;gap:10px;padding:10px;border-radius:16px;background:var(--bg);border:1px solid var(--line)}
+.brandbox b{display:block;font-size:14px;line-height:1.2}
+.brandbox span{font-size:12px;color:var(--leaf);font-weight:600}
+.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-family:'DM Serif Display',Georgia,serif;font-size:18px;color:#fff;background:#8E4B5A;overflow:hidden;flex:none}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:12px;color:var(--muted);text-decoration:none;font-weight:500;font-size:14.5px}
+.nav a:hover{background:var(--bg);color:var(--ink)}
+.nav a.on{background:var(--soft);color:var(--heading);font-weight:600}
+.nav svg{width:20px;height:20px;flex:none}
+.nav .count{margin-left:auto;background:var(--leaf-bg);color:var(--heading);font-size:11px;font-weight:700;border-radius:999px;padding:1px 7px}
+.side-foot{margin-top:auto;padding:14px;border-radius:16px;background:linear-gradient(180deg,var(--sky1),var(--sky2));font-size:13px;color:var(--ink)}
+.side-foot b{display:block;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:17px;color:var(--heading);margin-bottom:4px}
+main{padding:24px clamp(16px,3vw,40px) 72px;min-width:0}
+.wrap{max-width:1200px;margin:0 auto}
+.wrap > * + *{margin-top:18px}
+
+/* Page header: the withyou sky */
+.head{position:relative;overflow:hidden;border-radius:28px;padding:36px 34px 30px;background:
+  radial-gradient(55% 90% at 88% 0%,var(--cloud),transparent 62%),
+  radial-gradient(35% 70% at 30% -10%,var(--cloud),transparent 70%),
+  linear-gradient(180deg,var(--sky1),var(--sky2));
+  display:flex;gap:20px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.head p{margin:10px 0 0;color:var(--muted);max-width:60ch}
+.head .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;background:var(--green);color:var(--on-green);padding:10px 18px;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background .15s}
+.btn:hover{background:var(--green-2)}
+.btn svg{width:16px;height:16px}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--muted)}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btn.link{background:none;color:var(--heading);padding:4px 0;border-radius:0}
+.btn.link:hover{text-decoration:underline}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+/* Surfaces */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px}
+.panel .sub{color:var(--muted);font-size:13.5px;margin:4px 0 16px;max-width:70ch}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+.g2e{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.story{padding:30px 30px 26px;border-radius:24px;background:var(--card);border:1px solid var(--line)}
+.story p{font-family:'DM Serif Display',Georgia,serif;font-size:clamp(22px,2.4vw,31px);line-height:1.28;color:var(--heading);margin:0;max-width:34ch}
+.story .meta{color:var(--muted);margin-top:12px;font-size:14px;max-width:62ch}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.kpi{padding:16px 18px;border:1px solid var(--line);border-radius:18px;background:var(--card)}
+.kpi .l{color:var(--muted);font-size:13px}
+.kpi .v{font-size:24px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi .d{font-size:12.5px;color:var(--leaf);font-weight:600}
+.big{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.chart{width:100%;height:210px;display:block}
+.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:8px}
+
+/* Pills, fit bar */
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--leaf-bg);color:var(--leaf)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.danger{background:var(--danger-bg);color:var(--danger)}
+.pill.info{background:var(--info-bg);color:var(--info)}
+.pill.mute{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.fit{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--leaf);white-space:nowrap}
+.fit i{display:block;width:60px;height:6px;border-radius:9px;background:var(--leaf-bg);overflow:hidden}
+.fit i b{display:block;height:100%;background:var(--leaf);border-radius:9px}
+.fit.none{color:var(--muted);font-weight:500}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;margin:0 -6px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:12.5px;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.prod{display:flex;align-items:center;gap:12px;min-width:250px}
+.thumb{width:48px;height:48px;border-radius:12px;overflow:hidden;flex:none;background:var(--bg)}
+.thumb svg,.thumb img{width:100%;height:100%;display:block;object-fit:cover}
+.prod b{display:block;font-weight:600;line-height:1.3}
+.prod span{color:var(--muted);font-size:12.5px}
+.muted{color:var(--muted)}
+.empty{padding:36px 12px;text-align:center;color:var(--muted)}
+
+/* Controls */
+.toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;font-size:13.5px;font-weight:500;cursor:pointer;color:var(--muted)}
+.tab:hover{color:var(--ink)}
+.tab.on{background:var(--soft);color:var(--heading);border-color:#B9D8E4;font-weight:600}
+.tab small{opacity:.75;margin-left:4px}
+.search{position:relative;min-width:240px}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted)}
+.search input{padding-left:36px !important}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field > label,.lbl{font-weight:600;font-size:13.5px}
+.hint{color:var(--muted);font-size:12.5px;line-height:1.45}
+.err{color:var(--danger);font-size:12.5px;font-weight:600}
+input[type=text],input[type=number],input[type=search],input[type=date],select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%}
+textarea{resize:vertical;min-height:100px;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--leaf);box-shadow:0 0 0 3px var(--leaf-bg)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--ink)}
+.chip:hover{border-color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--leaf-bg);border-color:var(--leaf);color:var(--heading);font-weight:600}
+.drop{position:relative;border:1.5px dashed var(--line);border-radius:16px;padding:18px;text-align:center;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--bg);font-size:13.5px}
+.drop:hover{border-color:var(--leaf);color:var(--ink)}
+.drop svg{width:22px;height:22px}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.counter{font-size:12px;color:var(--muted);text-align:right}
+
+/* Editor */
+.editor{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+.editor .panel + .panel{margin-top:16px}
+.step{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.step .n{width:28px;height:28px;border-radius:50%;background:var(--leaf-bg);color:var(--heading);font-weight:700;font-size:13px;display:grid;place-items:center;flex:none;margin-top:2px}
+.preview-col{position:sticky;top:20px}
+.preview-col .cap{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px;color:var(--muted)}
+.phone{width:330px;max-width:100%;margin:0 auto;border-radius:46px;background:#E9EEF0;border:1px solid #D6DEE2;padding:10px;box-shadow:0 30px 60px -30px rgba(40,80,95,.35)}
+.screen{border-radius:37px;overflow:hidden;height:660px;overflow-y:auto;scrollbar-width:none;position:relative}
+.screen::-webkit-scrollbar{display:none}
+.notch{position:sticky;top:0;height:0;z-index:5}
+.notch::before{content:"";position:absolute;left:50%;top:9px;transform:translateX(-50%);width:92px;height:26px;border-radius:20px;background:#1b1f1d}
+.coverbox{display:grid;grid-template-columns:1fr 120px;gap:12px}
+.coverprev{border-radius:16px;overflow:hidden;height:130px;background-size:cover;background-position:center;border:1px solid var(--line);position:relative}
+.coverprev .acts{position:absolute;right:8px;bottom:8px;display:flex;gap:6px}
+.logoprev{width:120px;height:130px;border-radius:16px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--bg);position:relative;font-size:12.5px;color:var(--muted);text-align:center;padding:8px}
+.logoprev .avatar{width:58px;height:58px;font-size:24px}
+.logoprev input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.preset{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 4px;background:var(--card);cursor:pointer;font-size:13px}
+.preset:hover{border-color:var(--muted)}
+.preset[aria-pressed="true"]{border-color:var(--leaf);background:var(--leaf-bg);font-weight:600}
+.sw{width:24px;height:24px;border-radius:50%;border:1px solid rgba(0,0,0,.08)}
+.colors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.colorf{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:6px 8px;background:var(--bg)}
+.colorf input[type=color]{width:34px;height:34px;border:0;padding:0;background:none;cursor:pointer;flex:none;border-radius:8px}
+.colorf input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.colorf input[type=color]::-webkit-color-swatch{border:1px solid rgba(0,0,0,.1);border-radius:8px}
+.colorf input[type=text]{border:0;background:transparent;padding:4px;font-variant-numeric:tabular-nums;min-width:0;box-shadow:none}
+.contrast{display:flex;gap:10px;align-items:flex-start;font-size:13px;padding:10px 12px;border-radius:12px;background:var(--leaf-bg);color:var(--heading);margin-top:14px}
+.contrast svg{width:18px;height:18px;flex:none;margin-top:1px}
+.contrast.bad{background:var(--warn-bg);color:var(--warn)}
+.founder{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
+.iconbtn{border:1px solid var(--line);background:var(--card);width:38px;height:38px;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--muted)}
+.iconbtn:hover{color:var(--danger);border-color:var(--danger)}
+.iconbtn svg{width:16px;height:16px}
+.keepnote{display:flex;gap:12px;padding:14px 16px;border-radius:16px;background:linear-gradient(180deg,var(--sky1),var(--sky2));font-size:13.5px}
+.keepnote svg{width:20px;height:20px;flex:none;color:var(--heading);margin-top:2px}
+
+/* Brand page preview (inside the phone) */
+.pv{background:var(--pb);color:var(--pt);min-height:100%;font-family:'Figtree',system-ui,sans-serif}
+.pv-cover{height:230px;background-size:cover;background-position:center;position:relative}
+.pv-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,var(--pb))}
+.pv-body{padding:0 18px 28px;margin-top:-40px;position:relative;z-index:1}
+.pv-logo{width:66px;height:66px;border-radius:50%;background:#fff;border:3px solid var(--pb);display:grid;place-items:center;overflow:hidden;font-family:'DM Serif Display',Georgia,serif;font-size:28px;color:var(--pa)}
+.pv-logo img{width:100%;height:100%;object-fit:cover}
+.pv h2{font-size:27px;color:var(--pt);margin-top:10px;line-height:1.1}
+.pv h3{font-size:18px;color:var(--pa);margin:24px 0 8px}
+.pv.sans h2,.pv.sans h3{font-family:'Figtree',system-ui,sans-serif;font-weight:700;letter-spacing:-.015em}
+.pv p{font-size:13px;line-height:1.6;margin:0}
+.pv-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;margin-top:6px}
+.seal{display:inline-flex;align-items:center;gap:4px;background:#fff;color:#173A24;border-radius:999px;padding:2px 9px 2px 6px;font-weight:700;font-size:11px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.seal svg{width:12px;height:12px}
+.pv .more{color:var(--pa);font-weight:700;font-size:12.5px;margin-top:6px;display:inline-block}
+.audio{display:flex;align-items:center;gap:10px;margin-top:12px;padding:8px 10px;border-radius:999px;border:1px solid var(--pa);font-size:11.5px}
+.audio .play{width:26px;height:26px;border-radius:50%;background:var(--pa);display:grid;place-items:center;flex:none}
+.audio .play::before{content:"";border-left:8px solid var(--pb);border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px}
+.audio .wave{flex:1;height:14px;background:repeating-linear-gradient(90deg,var(--pa) 0 2px,transparent 2px 5px);opacity:.45;border-radius:3px}
+.faces{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none}
+.face{width:112px;flex:none;font-size:12px}
+.face .ph{height:132px;border-radius:16px;background:var(--pa);display:grid;place-items:center;font-family:'DM Serif Display',Georgia,serif;font-size:34px;color:var(--pb);margin-bottom:6px}
+.face b{display:block;line-height:1.25}
+.pv-chips{display:flex;flex-wrap:wrap;gap:6px}
+.pv-chips span{border:1px solid var(--pa);color:var(--pa);border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:600}
+.pv-prods{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pcard{background:#fff;color:#17261C;border-radius:16px;padding:8px;font-size:11.5px;border:1px solid rgba(0,0,0,.06);font-family:'Figtree',system-ui,sans-serif}
+.pcard .img{aspect-ratio:1;border-radius:12px;overflow:hidden;background:#F2F4F1}
+.pcard .img svg,.pcard .img img{width:100%;height:100%;display:block;object-fit:cover}
+.pcard .n{font-weight:600;margin:7px 2px 4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:30px}
+.pcard .pr{display:flex;justify-content:space-between;align-items:center;margin:0 2px 8px;gap:6px}
+.pcard .pr strong{font-size:12px}
+.pcard .fit i{width:34px}
+.pcard .fit{color:#3A9A5E;font-size:11px}
+.pcard .fit i{background:#E2F2E7}.pcard .fit i b{background:#3A9A5E}
+.pcard .keep{display:block;text-align:center;background:#173A24;color:#fff;border-radius:999px;padding:7px;font-weight:600;font-size:11px}
+.pcard.lg{font-size:13px;padding:10px}
+.pcard.lg .n{font-size:13.5px;min-height:36px}
+.pcard.lg .pr strong{font-size:14px}
+
+/* Home */
+.todo{list-style:none;margin:0;padding:0}
+.todo li{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.todo li:last-child{border-bottom:0}
+.todo .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--bg);flex:none;color:var(--heading)}
+.todo .ic svg{width:18px;height:18px}
+.todo .t{flex:1;min-width:0}
+.todo .t b{display:block;font-size:14px;line-height:1.3}
+.todo .t span{font-size:12.5px;color:var(--muted)}
+
+/* Analytics */
+.bars .b{display:grid;grid-template-columns:120px 1fr 48px;align-items:center;gap:10px;font-size:13.5px;margin-bottom:11px}
+.track{height:10px;border-radius:9px;background:var(--bg);overflow:hidden;border:1px solid var(--line)}
+.track b{display:block;height:100%;background:var(--leaf);border-radius:9px}
+.funnel .f{margin-bottom:12px}
+.funnel .f .top{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px}
+.funnel .f .top b{font-variant-numeric:tabular-nums}
+.funnel .f .bar{height:30px;border-radius:10px;background:var(--leaf-bg);position:relative;overflow:hidden}
+.funnel .f .bar b{position:absolute;inset:0 auto 0 0;background:var(--leaf);border-radius:10px;opacity:.85}
+.funnel .drop-rate{font-size:12px;color:var(--muted);margin:-4px 0 10px 2px}
+.queries{list-style:none;margin:0;padding:0}
+.queries li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.queries li:last-child{border-bottom:0}
+.insight{display:flex;gap:14px;padding:18px;border-radius:18px;background:linear-gradient(180deg,var(--sky1),var(--sky2))}
+.insight svg{width:22px;height:22px;flex:none;color:var(--heading);margin-top:2px}
+.insight p{margin:0 0 10px;font-size:14px}
+
+/* Reviews */
+.rating{display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+.rating .score{font-family:'DM Serif Display',Georgia,serif;font-size:56px;line-height:1;color:var(--heading)}
+.stars{color:var(--star);letter-spacing:1px;font-size:14px}
+.stars .off{color:var(--line)}
+.review{padding:18px 0;border-bottom:1px solid var(--line)}
+.review:last-child{border-bottom:0}
+.review .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.review .who{display:flex;gap:10px;align-items:center}
+.review .who .avatar{width:34px;height:34px;font-size:15px;background:var(--leaf)}
+.review .who b{display:block;font-size:14px;line-height:1.2}
+.review .who span{font-size:12px;color:var(--muted)}
+.review p{margin:10px 0 0}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tags span{font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--muted)}
+.reply{margin-top:12px;padding:12px 14px;border-left:3px solid var(--leaf);background:var(--bg);border-radius:0 12px 12px 0;font-size:14px}
+.reply b{display:block;font-size:12.5px;color:var(--heading);margin-bottom:2px}
+
+/* Promote / salons */
+.slot{border:1px solid var(--line);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:10px;background:var(--card)}
+.slot h3{font-size:19px}
+.slot p{margin:0;color:var(--muted);font-size:14px}
+.slot .price{font-weight:700;font-size:15px}
+.slot .reach{font-size:13px;color:var(--muted)}
+.slot .btn{align-self:flex-start;margin-top:auto}
+.test{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:start}
+.quote{font-family:'DM Serif Display',Georgia,serif;font-size:19px;line-height:1.35;color:var(--heading);margin:12px 0 0;max-width:46ch}
+.facts{display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--muted)}
+.facts b{display:block;font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* Drawer + toast */
+.overlay{position:fixed;inset:0;background:rgba(10,22,15,.38);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.overlay.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(800px,100%);background:var(--card);z-index:41;transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);border-left:1px solid var(--line)}
+.drawer.open{transform:none}
+.dhead{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.dhead p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.dbody{padding:22px 24px;overflow-y:auto;flex:1}
+.dfoot{padding:14px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap}
+.dfoot .err{margin-right:auto}
+.dgrid{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:26px;align-items:start}
+.dgrid .aside{position:sticky;top:0}
+.sec-t{font-weight:700;font-size:14.5px;margin:4px 0 12px;color:var(--heading);display:flex;gap:10px;align-items:center}
+.sec-t .n{width:24px;height:24px;border-radius:50%;background:var(--leaf-bg);display:grid;place-items:center;font-size:12px}
+.sec + .sec{margin-top:10px;padding-top:18px;border-top:1px solid var(--line)}
+.x{border:0;background:var(--bg);width:38px;height:38px;border-radius:50%;cursor:pointer;display:grid;place-items:center;flex:none}
+.x svg{width:18px;height:18px}
+.photos{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.photos .phx{aspect-ratio:1;border-radius:12px;overflow:hidden;position:relative;background:var(--bg);border:1px solid var(--line)}
+.photos .phx img{width:100%;height:100%;object-fit:cover;display:block}
+.photos .phx .main{position:absolute;left:4px;bottom:4px;background:#fff;color:#173A24;font-size:10px;padding:1px 7px;border-radius:999px;font-weight:700}
+.photos .phx button{position:absolute;right:4px;top:4px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;cursor:pointer;display:grid;place-items:center;padding:0}
+.photos .phx button svg{width:12px;height:12px}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);opacity:0;pointer-events:none;background:#fff;color:var(--heading);border:1px solid var(--line);box-shadow:0 12px 30px -12px rgba(30,60,70,.25);padding:12px 20px;border-radius:999px;font-weight:600;font-size:14px;transition:.25s;z-index:60;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:1180px){
+  .editor{grid-template-columns:1fr}
+  .preview-col{position:static}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g2{grid-template-columns:1fr}
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:sticky;top:env(safe-area-inset-top,0px);height:auto;z-index:20;flex-direction:row;align-items:center;padding:10px 12px;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);gap:12px}
+  .brandbox,.side-foot,.wordmark small{display:none}
+  .wordmark{font-size:24px;padding:0 4px}
+  .nav{flex-direction:row}
+  .nav a{white-space:nowrap;padding:8px 12px}
+  .head{padding:26px 20px 22px;border-radius:22px}
+  main{padding:16px 14px 64px}
+  .row2,.row3,.colors,.g2e{grid-template-columns:1fr}
+  .dgrid{grid-template-columns:1fr}
+  .dgrid .aside{position:static;max-width:240px}
+  .coverbox{grid-template-columns:1fr 100px}
+  .logoprev{width:100px}
+}
+@media (max-width:560px){
+  .g4,.kpis{grid-template-columns:1fr 1fr}
+  .kpi .v{font-size:20px}
+  .bars .b{grid-template-columns:90px 1fr 42px}
+  .test{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none !important;animation:none !important}
+}
+
+/* ---- Admin additions ---- */
+.rail{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:150px}
+.rail i{height:6px;border-radius:4px;background:var(--line)}
+.rail i.done{background:var(--leaf)}
+.rail i.cur{background:#7FB8CF}
+.rail i.block{background:var(--danger)}
+.stepl{font-size:12.5px;color:var(--muted);margin-top:5px;max-width:260px;line-height:1.35}
+.stepl.block{color:var(--danger);font-weight:600}
+.raillg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:4px 0 6px}
+.raillg .st i{display:block;height:8px;border-radius:5px;background:var(--line);margin-bottom:8px}
+.raillg .st.done i{background:var(--leaf)}
+.raillg .st.cur i{background:#7FB8CF}
+.raillg .st.block i{background:var(--danger)}
+.raillg .st span{font-size:12px;color:var(--muted);line-height:1.3;display:block}
+.raillg .st.block span,.raillg .st.cur span{color:var(--ink);font-weight:600}
+.alertbox{display:flex;gap:12px;padding:14px 16px;border-radius:16px;background:var(--danger-bg);color:var(--danger);font-size:14px;margin:14px 0}
+.alertbox svg{width:20px;height:20px;flex:none;margin-top:1px}
+.alertbox b{display:block;color:var(--danger)}
+.alertbox .btn{margin-top:10px}
+.hp{display:inline-flex;align-items:center;gap:6px;background:var(--leaf-bg);color:var(--leaf);font-weight:700;border-radius:999px;padding:4px 11px;font-size:13px;white-space:nowrap}
+.hp.warn{background:var(--warn-bg);color:var(--warn)}
+.hp.danger{background:var(--danger-bg);color:var(--danger)}
+.decide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.decide .panel h2{display:flex;align-items:center;gap:10px}
+.decide .panel h2 .count{font-family:'Figtree',system-ui,sans-serif;font-size:13px;font-weight:700;background:var(--danger-bg);color:var(--danger);border-radius:999px;padding:2px 9px}
+.decide .panel h2 .count.w{background:var(--warn-bg);color:var(--warn)}
+.decide .panel h2 .count.i{background:var(--info-bg);color:var(--info)}
+.carriers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.carrier .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px}
+.carrier .top span{font-size:12.5px;color:var(--muted)}
+.carrier dl{display:grid;grid-template-columns:1fr auto;gap:8px 12px;margin:0;font-size:14px}
+.carrier dt{color:var(--muted)}
+.carrier dd{margin:0;font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.rules .r{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.rules .r:last-child{border-bottom:0}
+.check{display:flex;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;cursor:pointer;align-items:flex-start;background:var(--card)}
+.check:hover{border-color:var(--muted)}
+.check input{width:18px;height:18px;accent-color:#3A9A5E;margin:2px 0 0;flex:none;cursor:pointer}
+.check .t{flex:1;font-size:14px}
+.auto{font-size:11.5px;color:var(--info);background:var(--info-bg);border-radius:999px;padding:1px 8px;font-weight:600;white-space:nowrap}
+.qitem{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.qitem:last-child{border-bottom:0}
+.qitem .avatar{width:42px;height:42px;font-size:18px;background:#7FB8CF}
+.qitem b{display:block;line-height:1.3}
+.qitem .m{font-size:12.5px;color:var(--muted)}
+.people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.person{display:flex;gap:14px;align-items:flex-start}
+.person .avatar{width:54px;height:54px;font-size:22px}
+.person h3{font-size:19px}
+.person .role{font-size:13px;color:var(--muted)}
+.person p{margin:10px 0 0;font-size:14px}
+.load{margin-top:12px}
+.load .top{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+.load .track b{background:#7FB8CF}
+.load.hi .track b{background:var(--warn)}
+.mini{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--muted)}
+.mini b{display:block;font-size:15px;color:var(--ink)}
+.assign{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.assign select{width:auto;min-width:170px;padding:7px 10px;font-size:13.5px}
+.infogrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 20px;font-size:14px}
+.infogrid .k{color:var(--muted);font-size:12.5px}
+.timeline{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--line)}
+.timeline li{position:relative;padding:0 0 14px 14px;font-size:13.5px}
+.timeline li::before{content:"";position:absolute;left:-21px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--leaf);border:2px solid var(--card)}
+.timeline li.bad::before{background:var(--danger)}
+.timeline li span{display:block;color:var(--muted);font-size:12px}
+.bgroup{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.bgroup .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.bgroup ul{margin:6px 0 0;padding-left:18px;font-size:13.5px;color:var(--muted)}
+.privacy{display:flex;gap:12px;padding:14px 16px;border-radius:16px;background:var(--soft);font-size:13.5px}
+.privacy svg{width:20px;height:20px;flex:none;color:var(--heading);margin-top:1px}
+.kpis.k3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:1180px){.decide,.people{grid-template-columns:1fr}.carriers{grid-template-columns:1fr}}
+@media (max-width:700px){.rules .r{grid-template-columns:1fr}.infogrid{grid-template-columns:1fr}.qitem{grid-template-columns:auto minmax(0,1fr)}.qitem > :last-child{grid-column:1/-1}.kpis.k3{grid-template-columns:1fr 1fr}.raillg span{font-size:11px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" aria-label="Navigation">
+    <a class="wordmark" href="#/jour">withyou<small>Console admin</small></a>
+    <div class="brandbox"><div class="avatar" style="background:#7FB8CF">A</div><div><b>Amina</b><span style="color:var(--muted);font-weight:500">Opérations</span></div></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot"><b>Espace marque</b>Voir ce que les marques voient, pour vérifier une page ou un produit.</div>
+  </aside>
+  <main id="main" tabindex="-1"></main>
+</div>
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle"></aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const main=$('#main');
+const fmt=n=>Math.round(n).toLocaleString('fr-FR');
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const I={
+ home:'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
+ bag:'M5 8h14l-1 12H6z M9 8V6a3 3 0 0 1 6 0v2',
+ truck:'M3 6h11v10H3z M14 10h4l3 3v3h-7 M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z M17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+ shield:'M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z M8.5 12l2.5 2.5 4.5-5',
+ store:'M4 9l1.5-5h13L20 9 M4 9v11h16V9 M4 9h16 M9 20v-6h6v6',
+ scissors:'M6 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M6 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M8 7l12 10 M8 17 20 7',
+ users:'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7 M16 3.5a4 4 0 0 1 0 7.5 M22 21c0-3-1.8-5.5-4.5-6.5',
+ gift:'M4 11h16v10H4z M3 7h18v4H3z M12 7v14 M12 7C10 3 7 3 7 5s3 2 5 2 M12 7c2-4 5-4 5-2s-3 2-5 2',
+ chart:'M4 19h16 M7 15v-4 M12 15V6 M17 15V9',
+ chev:'M9 6l6 6-6 6',
+ x:'M6 6l12 12 M18 6 6 18',
+ check:'M5 12.5l4.5 4.5L19 7',
+ alert:'M12 8v5 M12 16.5h.01 M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+ search:'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M20 20l-4-4',
+ lock:'M6 11h12v10H6z M8 11V7a4 4 0 0 1 8 0v4',
+ bulb:'M9 18h6 M10 21h4 M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z',
+ plus:'M12 5v14 M5 12h14'
+};
+const ic=n=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${I[n]}"/></svg>`;
+
+/* ---------------- Data ---------------- */
+const STEPS=['Confirmée','Collecte chez les marques','Contrôle et emballage','Chez le livreur','Livrée'];
+const ACT={brand:'Relancer la marque',client:'Reprogrammer la livraison',pay:'Vérifier le paiement',quality:'Suivre le remplacement',carrier:'Ouvrir un ticket transporteur'};
+const CARRIERS=['Yalidine','ZR Express','Coursiers Alger'];
+function defaults(){return{
+ orders:[
+  {id:'WY-2414',who:'Asma K.',wilaya:'Tizi Ouzou',total:6500,pay:'Edahabia',carrier:'Yalidine',step:1,block:null,age:'il y a 4 h',brands:[{n:'Azul Cosmétique',items:['Azar, rituel nettoyant','Thala, rituel hydratant'],ok:true},{n:'Savon Namira',items:['Savon au rhassoul'],ok:false}]},
+  {id:'WY-2413',who:'Rym A.',wilaya:'Sétif',total:2500,pay:'À la livraison',carrier:'Yalidine',step:0,block:null,age:'il y a 5 h',brands:[{n:'Gateline',items:['Crème karité et miel'],ok:false}]},
+  {id:'WY-2412',who:'Lina B.',wilaya:'Alger',total:5600,pay:'CIB',carrier:'Coursiers Alger',step:1,block:"Dihya n'a pas remis le sérum, J+2",bt:'brand',age:'il y a 2 j',brands:[{n:'Azul Cosmétique',items:['Azar, rituel nettoyant'],ok:true},{n:'Cosmétique Dihya',items:['Sérum éclat rose musquée'],ok:false}]},
+  {id:'WY-2410',who:'Yasmine M.',wilaya:'Oran',total:3200,pay:'À la livraison',carrier:'Yalidine',step:3,block:'Cliente injoignable, 2 tentatives',bt:'client',age:'il y a 3 j',brands:[{n:'Aryana Beauty',items:['Brume visage à la rose'],ok:true}]},
+  {id:'WY-2409',who:'Sonia R.',wilaya:'Annaba',total:4100,pay:'CIB',carrier:'Yalidine',step:0,block:'Paiement CIB non confirmé par la SATIM',bt:'pay',age:'il y a 6 h',brands:[{n:'Venus',items:['Gel nettoyant','Crème de jour'],ok:false}]},
+  {id:'WY-2408',who:'Imane T.',wilaya:'Blida',total:3700,pay:'CIB',carrier:'Yalidine',step:2,block:null,age:'hier',brands:[{n:'Venus',items:['Lait corps'],ok:true},{n:'Savon Namira',items:['Savon noir'],ok:true}]},
+  {id:'WY-2405',who:'Nour H.',wilaya:'Constantine',total:2800,pay:'Edahabia',carrier:'ZR Express',step:2,block:'Pot abîmé au contrôle, remplacement demandé à Azul',bt:'quality',age:'hier',brands:[{n:'Azul Cosmétique',items:['Thala, rituel hydratant'],ok:true}]},
+  {id:'WY-2402',who:'Sara D.',wilaya:'Béjaïa',total:5100,pay:'CIB',carrier:'Yalidine',step:3,block:null,age:'il y a 2 j',brands:[{n:'Cosmétique Dihya',items:['Masque argile','Tonique'],ok:true}]},
+  {id:'WY-2401',who:'Hana Z.',wilaya:'Ouargla',total:6900,pay:'À la livraison',carrier:'ZR Express',step:3,block:'Colis immobile depuis 3 jours au hub de Ghardaïa',bt:'carrier',age:'il y a 4 j',brands:[{n:'Aryana Beauty',items:['Coffret routine'],ok:true}]},
+  {id:'WY-2398',who:'Kenza R.',wilaya:'Oran',total:900,pay:'À la livraison',carrier:'Yalidine',step:4,block:null,age:'il y a 4 j',brands:[{n:'Azul Cosmétique',items:["Savon noir à l'eucalyptus"],ok:true}]},
+  {id:'WY-2395',who:'Meriem S.',wilaya:'Alger',total:2800,pay:'CIB',carrier:'Coursiers Alger',step:4,block:null,age:'il y a 5 j',brands:[{n:'Azul Cosmétique',items:['Azar, rituel nettoyant'],ok:true}]}
+ ],
+ brands:[
+  {id:'azul',name:'Azul Cosmétique',type:'Artisan',city:'Tizi Ouzou',status:'active',prods:6,gmv:186400,com:15,rating:4.7,late:0,contact:'Saloi Djedid'},
+  {id:'dihya',name:'Cosmétique Dihya',type:'Artisan',city:'Béjaïa',status:'active',prods:9,gmv:142300,com:15,rating:4.5,late:3,contact:'Dihya Amrani'},
+  {id:'namira',name:'Savon Namira',type:'Artisan',city:'Alger',status:'active',prods:7,gmv:98700,com:15,rating:4.8,late:0,contact:'Namira Ouali'},
+  {id:'aryana',name:'Aryana Beauty',type:'Marque nationale',city:'Alger',status:'active',prods:14,gmv:264500,com:12,rating:4.4,late:1,contact:'Service partenaires'},
+  {id:'venus',name:'Venus',type:'Marque nationale',city:'Alger',status:'active',prods:22,gmv:412800,com:10,rating:4.3,late:0,contact:'Direction commerciale'},
+  {id:'gateline',name:'Gateline',type:'Marque nationale',city:'Sétif',status:'active',prods:11,gmv:121900,com:12,rating:4.4,late:0,contact:'Service partenaires'},
+  {id:'tafsut',name:'Tafsut Naturel',type:'Artisan',city:'Bouira',status:'review',prods:5,gmv:0,com:15,rating:null,late:0,contact:'Lynda Tafsut'},
+  {id:'kglow',name:'K-Glow Import',type:'Internationale',city:'Oran',status:'suspended',prods:18,gmv:57200,com:18,rating:3.9,late:5,contact:'Karim Bensaïd',note:"Documents d'importation expirés"}
+ ],
+ queue:[
+  {id:'v1',type:'Nouveau produit',brand:'Azul Cosmétique',title:'Huile de figue de barbarie, 30 ml',since:'il y a 1 j',kind:'product'},
+  {id:'v2',type:'Page marque modifiée',brand:'Azul Cosmétique',title:'Couleurs, histoire et engagements',since:'il y a 3 h',kind:'page'},
+  {id:'v3',type:'Nouvelle marque',brand:'Tafsut Naturel',title:'Candidature complète avec 5 produits',since:'il y a 2 j',kind:'brand',brandId:'tafsut'},
+  {id:'v4',type:'Engagement à prouver',brand:'Cosmétique Dihya',title:'« Bio certifié » : certificat attendu',since:'il y a 4 j',kind:'proof'},
+  {id:'v5',type:'Nouveau produit',brand:'Savon Namira',title:"Savon au lait d'ânesse",since:'il y a 5 h',kind:'product'}
+ ],
+ salons:[
+  {name:'Salon Lumière',type:'Coiffure et esthétique',wilaya:'Alger, Hydra',code:'LUMIERE10',reco:84,sales:46200,trained:true},
+  {name:'Institut Tafsut',type:'Esthétique',wilaya:'Tizi Ouzou',code:'TAFSUT10',reco:61,sales:38400,trained:true},
+  {name:'Institut Nour',type:'Esthétique',wilaya:'Oran',code:'NOUR10',reco:47,sales:29800,trained:true},
+  {name:'Beauty Corner',type:'Coiffure',wilaya:'Constantine',code:'BCORNER10',reco:33,sales:17500,trained:true},
+  {name:'Institut Lalla',type:'Esthétique',wilaya:'Béjaïa',code:'LALLA10',reco:25,sales:11200,trained:true},
+  {name:'Salon Yasmina',type:'Coiffure',wilaya:'Alger, Kouba',code:'YASMINA10',reco:12,sales:6100,trained:false},
+  {name:'Salon Rose',type:'Coiffure et esthétique',wilaya:'Sétif',code:'ROSE10',reco:8,sales:3900,trained:false},
+  {name:'Salon Amel',type:'Coiffure',wilaya:'Blida',code:'AMEL10',reco:0,sales:0,trained:false}
+ ],
+ testReq:[
+  {brand:'Azul Cosmétique',prod:'Huile de figue de barbarie',n:15,wilaya:'Peu importe'},
+  {brand:'Savon Namira',prod:"Savon au lait d'ânesse",n:20,wilaya:'Alger'}
+ ],
+ experts:[
+  {name:'Dr Lamia Haddad',role:'Dermatologue',city:'Alger',mission:'Relit les routines générées pour les peaux sensibles et réactives.',load:70,open:6,rating:'4,9',avail:'Mardi et jeudi'},
+  {name:'Yasmine Belkacem',role:'Cosmétologue',city:'Blida',mission:'Vérifie les listes INCI des nouveaux produits.',load:90,open:9,rating:'4,8',avail:'Du dimanche au jeudi'},
+  {name:'Sabrina Kaci',role:'Esthéticienne formatrice',city:'Tizi Ouzou',mission:'Forme les équipes des salons partenaires.',load:40,open:3,rating:'4,9',avail:'Sur rendez-vous'},
+  {name:'Imene Ferhat',role:'Conseillère beauté',city:'Oran',mission:"Répond aux questions que l'assistant IA transmet à un humain.",load:55,open:12,rating:'4,7',avail:'Tous les jours, 9 h à 17 h'}
+ ],
+ creators:[
+  {name:'Nour Beauty',role:'Créatrice skincare, Instagram',city:'Alger',reach:'48 k abonnées',camp:2,brands:'Azul, Namira'},
+  {name:'Meriem Glow',role:'Créatrice routines, TikTok',city:'Oran',reach:'120 k abonnées',camp:1,brands:'Aryana Beauty'},
+  {name:'Sarah Nature',role:'Créatrice cosmétique naturelle',city:'Béjaïa',reach:'22 k abonnées',camp:0,brands:'Aucune pour le moment'},
+  {name:'Lydia Soins',role:'Créatrice cheveux, Instagram',city:'Alger',reach:'35 k abonnées',camp:1,brands:'Venus'}
+ ],
+ missions:[
+  {t:'Revue INCI : Huile de figue de barbarie (Azul)',type:'Ingrédients',due:'avant le 25 sept.',to:null},
+  {t:"12 réponses de l'assistant signalées à relire",type:'Assistant IA',due:"aujourd'hui",to:null},
+  {t:'Former Salon Amel (Blida) et Salon Rose (Sétif)',type:'Formation',due:'début octobre',to:null},
+  {t:'Campagne créatrice pour Azul Cosmétique',type:'Influence',due:'devis sous 72 h',to:null}
+ ],
+ boxItems:[
+  {p:'Thala, rituel hydratant',b:'Azul Cosmétique',v:'Peau mixte',need:320,have:31,st:'short'},
+  {p:"Savon noir à l'eucalyptus",b:'Azul Cosmétique',v:'Peau mixte, peau grasse',need:497,have:120,st:'short'},
+  {p:'Brume visage à la rose',b:'Aryana Beauty',v:'Peau sèche',need:202,have:250,st:'ok'},
+  {p:'Gel nettoyant doux',b:'Venus',v:'Peau grasse, peau sensible',need:320,have:400,st:'ok'},
+  {p:'Crème karité et miel',b:'Gateline',v:'Peau sèche, peau sensible',need:345,have:0,st:'wait'},
+  {p:'Masque argile',b:'Cosmétique Dihya',v:'Peau grasse',need:177,have:180,st:'ok'}
+ ],
+ cands:[
+  {b:'Azul Cosmétique',p:'Huile de figue de barbarie (mini 10 ml)',v:'Peau sèche',st:'new'},
+  {b:'Savon Namira',p:'Savon au rhassoul',v:'Peau grasse',st:'new'},
+  {b:'Gateline',p:'Baume lèvres au miel',v:'Toutes',st:'new'}
+ ],
+ ui:{of:'all',oq:'',bf:'all',sf:'all',period:30,pt:'experts'}
+}}
+let S=defaults();
+const KEY='wy-admin-v1';
+try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d)Object.keys(d).forEach(k=>{if(k!=='ui')S[k]=d[k]})}catch(e){}
+let st;function save(){clearTimeout(st);st=setTimeout(()=>{try{const c=Object.assign({},S);delete c.ui;localStorage.setItem(KEY,JSON.stringify(c))}catch(e){}},250)}
+
+/* ---------------- Helpers ---------------- */
+const head=(t,sub,act)=>`<header class="head"><div><h1>${t}</h1>${sub?`<p>${sub}</p>`:''}</div>${act?`<div class="actions">${act}</div>`:''}</header>`;
+const blocked=()=>S.orders.filter(o=>o.block);
+const rail=o=>`<div class="rail" aria-hidden="true">${STEPS.map((s,i)=>`<i class="${i<o.step||o.step===4?'done':i===o.step?(o.block?'block':'cur'):''}"></i>`).join('')}</div>`;
+const railLg=o=>`<div class="raillg">${STEPS.map((s,i)=>`<div class="st ${i<o.step||o.step===4?'done':i===o.step?(o.block?'block':'cur'):''}"><i></i><span>${s}</span></div>`).join('')}</div>`;
+let gid=0;
+function series(n,base,seed){const a=[];for(let i=0;i<n;i++)a.push(Math.round(base*(1+.24*Math.sin(i/2.3+seed)+.12*Math.sin(i/5.1+seed*1.6)+.007*i)));return a}
+function areaChart(v,h=220){const w=600,max=Math.max(...v)*1.12,n=v.length,X=i=>(i/(n-1)*w).toFixed(1),Y=x=>(h-x/max*h).toFixed(1);
+ const d=v.map((x,i)=>(i?'L':'M')+X(i)+' '+Y(x)).join(' '),id='g'+(++gid);
+ return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Évolution du volume de ventes"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--leaf);stop-opacity:.26"/><stop offset="1" style="stop-color:var(--leaf);stop-opacity:0"/></linearGradient></defs>${[.25,.5,.75].map(f=>`<line x1="0" x2="${w}" y1="${h*f}" y2="${h*f}" style="stroke:var(--line)" vector-effect="non-scaling-stroke"/>`).join('')}<path d="${d} L${w} ${h} L0 ${h}Z" fill="url(#${id})"/><path d="${d}" fill="none" style="stroke:var(--leaf)" stroke-width="2.2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`}
+const bars=(rows,unit='%')=>`<div class="bars">${rows.map(r=>`<div class="b"><span>${r[0]}</span><span class="track"><b style="width:${r[1]}%"></b></span><span class="num">${r[1]} ${unit}</span></div>`).join('')}</div>`;
+const initials=n=>esc(n.replace(/^Dr\s+/,'').split(' ').map(x=>x[0]).slice(0,2).join(''));
+const kpis=(arr,cls='')=>`<div class="kpis ${cls}">${arr.map(k=>`<div class="kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div>${k[2]?`<div class="d"${k[3]?` style="color:var(--${k[3]})"`:''}>${k[2]}</div>`:''}</div>`).join('')}</div>`;
+
+/* ---------------- Vue du jour ---------------- */
+function renderToday(){
+ const b=blocked(),q=S.queue,short=S.boxItems.filter(x=>x.st!=='ok'),anom=S.orders.filter(o=>o.block&&(o.bt==='carrier'||o.bt==='client'));
+ const li=(items,fn,empty)=>items.length?`<ul class="todo">${items.map(fn).join('')}</ul>`:`<p class="empty">${empty}</p>`;
+ return `<div class="wrap">${head('Bonjour Amina.','Mercredi 23 septembre. Voici ce qui attend une décision aujourd\'hui.','<a class="btn ghost" href="#/analyses">Voir les analyses</a>')}
+ <section class="story"><p>Aujourd'hui, ${b.length} commande${b.length>1?'s sont bloquées':' est bloquée'} et ${q.length} validation${q.length>1?'s attendent':' attend'} une décision. La box d'octobre s'assemble dans 5 jours.</p>
+ <div class="meta" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><span class="hp">${ic('check')}93 % livrées à temps</span><span class="hp">Délai moyen 2,3 jours</span><span class="hp warn">${short.length} produits manquent pour la box</span></div></section>
+ <div class="decide">
+  <section class="panel"><div class="ph"><h2>Commandes bloquées <span class="count">${b.length}</span></h2><a class="btn ghost sm" href="#/commandes" data-action="of-blocked">Toutes</a></div><p class="sub">L'étape qui bloque, et l'action pour débloquer.</p>
+  ${li(b.slice(0,4),o=>`<li><span class="ic" style="color:var(--danger)">${ic('alert')}</span><span class="t"><b>${o.id}, ${esc(o.who)}, ${esc(o.wilaya)}</b><span>${esc(o.block)}</span></span><button class="btn ghost sm" data-action="order" data-id="${o.id}">Ouvrir</button></li>`,'Aucune commande bloquée.')}</section>
+  <section class="panel"><div class="ph"><h2>Validations Charte <span class="count w">${q.length}</span></h2><a class="btn ghost sm" href="#/validations">Toutes</a></div><p class="sub">Rien n'est publié sans passer par la Charte Beauté Pure.</p>
+  ${li(q.slice(0,4),v=>`<li><span class="ic">${ic('shield')}</span><span class="t"><b>${esc(v.brand)} : ${esc(v.title)}</b><span>${esc(v.type)}, ${v.since}</span></span><button class="btn ghost sm" data-action="validate" data-id="${v.id}">Examiner</button></li>`,'Aucune validation en attente.')}</section>
+  <section class="panel"><div class="ph"><h2>Box d'octobre <span class="count w">${short.length}</span></h2><a class="btn ghost sm" href="#/box">Préparer</a></div><p class="sub">Produits dont le stock ne couvre pas encore les abonnées.</p>
+  ${li(short,x=>`<li><span class="ic">${ic('gift')}</span><span class="t"><b>${esc(x.p)}, ${esc(x.b)}</b><span>${x.st==='wait'?'Marque sans réponse':`Il manque ${fmt(x.need-x.have)} unités`} sur ${fmt(x.need)}</span></span><button class="btn ghost sm" data-action="box-remind" data-p="${esc(x.p)}">Relancer</button></li>`,'Tous les produits sont réunis.')}</section>
+  <section class="panel"><div class="ph"><h2>Livraisons en anomalie <span class="count i">${anom.length}</span></h2><a class="btn ghost sm" href="#/livraisons">Suivi</a></div><p class="sub">Colis immobiles ou clientes injoignables.</p>
+  ${li(anom,o=>`<li><span class="ic">${ic('truck')}</span><span class="t"><b>${o.id}, ${o.carrier}</b><span>${esc(o.block)}</span></span><button class="btn ghost sm" data-action="resolve" data-id="${o.id}">${ACT[o.bt]}</button></li>`,'Aucune anomalie en cours.')}</section>
+ </div></div>`;
+}
+
+/* ---------------- Commandes ---------------- */
+function orderRows(){
+ const f=S.ui.of,q=S.ui.oq.toLowerCase();
+ const list=S.orders.filter(o=>(f==='all'||(f==='blocked'&&o.block)||String(o.step)===f)&&(!q||(o.id+o.who+o.wilaya+o.brands.map(b=>b.n).join()).toLowerCase().includes(q)));
+ if(!list.length)return '<tr><td colspan="7" class="empty">Aucune commande ne correspond.</td></tr>';
+ return list.map(o=>`<tr><td><b>${o.id}</b><div class="muted" style="font-size:12.5px">${o.age}</div></td><td>${esc(o.who)}<div class="muted" style="font-size:12.5px">${esc(o.wilaya)}</div></td><td>${o.brands.map(b=>esc(b.n)).join(', ')}</td><td class="num">${fmt(o.total)} DZD</td><td>${esc(o.pay)}</td><td>${rail(o)}<div class="stepl ${o.block?'block':''}">${o.block?esc(o.block):STEPS[o.step]}</div></td><td class="num"><button class="btn ghost sm" data-action="order" data-id="${o.id}">Ouvrir</button></td></tr>`).join('');
+}
+function renderOrders(){
+ const F=[['all','Toutes'],['blocked','Bloquées'],['0','Confirmées'],['1','Collecte'],['2','Emballage'],['3','Chez le livreur'],['4','Livrées']];
+ const cnt=k=>S.orders.filter(o=>k==='all'||(k==='blocked'&&o.block)||String(o.step)===k).length;
+ return `<div class="wrap">${head('Commandes','Chaque commande peut réunir plusieurs marques. La barre montre où elle en est, et en rouge l\'étape qui bloque.','')}
+ ${kpis([['En cours',S.orders.filter(o=>o.step<4).length],['Bloquées',blocked().length,'à traiter en priorité','danger'],['En collecte chez les marques',cnt('1')],['Livrées cette semaine','148','+11 %']])}
+ <section class="panel"><div class="toolbar"><div class="tabs">${F.map(x=>`<button class="tab${S.ui.of===x[0]?' on':''}" data-action="of" data-v="${x[0]}">${x[1]}<small>${cnt(x[0])}</small></button>`).join('')}</div><div class="search">${ic('search')}<input type="search" id="oq" placeholder="N°, cliente, wilaya, marque" value="${esc(S.ui.oq)}" aria-label="Rechercher une commande"></div></div>
+ <div class="tbl-wrap"><table><thead><tr><th>Commande</th><th>Cliente</th><th>Marques</th><th class="num">Montant</th><th>Paiement</th><th>Avancement</th><th></th></tr></thead><tbody id="otable">${orderRows()}</tbody></table></div></section></div>`;
+}
+function openOrder(id){
+ const o=S.orders.find(x=>x.id===id);if(!o)return;
+ const tl=[['Commande confirmée',o.age]];if(o.step>=1)tl.push(['Demande de collecte envoyée aux marques','même jour']);if(o.step>=2)tl.push(['Articles reçus à l\'entrepôt withyou','J+1']);if(o.step>=3)tl.push(['Remis à '+o.carrier,'J+1']);if(o.step>=4)tl.push(['Livrée à la cliente','J+3']);
+ const body=`${railLg(o)}
+ ${o.block?`<div class="alertbox">${ic('alert')}<div><b>Bloquée : ${STEPS[o.step].toLowerCase()}</b>${esc(o.block)}<div><button class="btn sm" data-action="resolve" data-id="${o.id}">${ACT[o.bt]}</button></div></div></div>`:''}
+ <div class="sec"><div class="sec-t">Articles par marque</div>${o.brands.map(b=>`<div class="bgroup"><div class="top"><b>${esc(b.n)}</b>${b.ok||o.step>=2?'<span class="pill ok">Reçu</span>':'<span class="pill warn">À collecter</span>'}</div><ul>${b.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}</div>
+ <div class="sec"><div class="sec-t">Cliente et paiement</div><div class="infogrid"><div><div class="k">Cliente</div>${esc(o.who)}</div><div><div class="k">Wilaya</div>${esc(o.wilaya)}</div><div><div class="k">Téléphone</div>05•• •• •• 41</div><div><div class="k">Paiement</div>${esc(o.pay)}, ${fmt(o.total)} DZD</div></div></div>
+ <div class="sec"><div class="sec-t">Livraison</div><div class="field" style="max-width:280px"><label for="ocar">Transporteur</label><select id="ocar" data-oid="${o.id}">${CARRIERS.map(c=>`<option${c===o.carrier?' selected':''}${c==='Coursiers Alger'&&!o.wilaya.startsWith('Alger')?' disabled':''}>${c}</option>`).join('')}</select><span class="hint">Coursiers Alger ne livre que la wilaya d'Alger.</span></div></div>
+ <div class="sec"><div class="sec-t">Historique</div><ul class="timeline">${tl.map(t=>`<li>${t[0]}<span>${t[1]}</span></li>`).join('')}${o.block?`<li class="bad">${esc(o.block)}<span>en cours</span></li>`:''}</ul></div>`;
+ openDrawer(`Commande ${o.id}`,`${o.brands.length} marque${o.brands.length>1?'s':''}, ${fmt(o.total)} DZD`,body,`<button class="btn ghost" data-action="refund" data-id="${o.id}">Rembourser la cliente</button><button class="btn ghost" data-action="call" data-id="${o.id}">Contacter la cliente</button>`);
+}
+
+/* ---------------- Livraisons ---------------- */
+function renderDeliveries(){
+ const C=[
+  {n:'Yalidine',z:'58 wilayas',d:'2,4 j',ok:'94 %',ret:'3,1 %',cost:'650 DZD',act:S.orders.filter(o=>o.carrier==='Yalidine'&&o.step===3).length+124,h:'hp'},
+  {n:'ZR Express',z:'58 wilayas',d:'2,9 j',ok:'91 %',ret:'4,6 %',cost:'590 DZD',act:S.orders.filter(o=>o.carrier==='ZR Express'&&o.step===3).length+62,h:'hp warn'},
+  {n:'Coursiers Alger',z:'Alger uniquement',d:'0,8 j',ok:'98 %',ret:'1,2 %',cost:'400 DZD',act:21,h:'hp'}
+ ];
+ const anom=S.orders.filter(o=>o.block&&(o.bt==='carrier'||o.bt==='client'));
+ const extra=[{id:'WY-2377',carrier:'Yalidine',w:'Tlemcen',p:'Retour : paiement à la livraison refusé',since:'2 j',a:'Réexpédier'},{id:'WY-2370',carrier:'ZR Express',w:'Tamanrasset',p:'Délai dépassé de 3 jours',since:'5 j',a:'Ouvrir un ticket'}];
+ const rules=[['Wilaya d\'Alger','Coursiers Alger'],['Nord et Hauts Plateaux','Yalidine'],['Grand Sud','ZR Express'],['Commandes au-delà de 10 000 DZD','Yalidine']];
+ return `<div class="wrap">${head('Livraisons','Comparez les transporteurs sur ce qui compte pour la cliente : le délai, la réussite de livraison et les retours.','')}
+ <div class="carriers">${C.map(c=>`<section class="panel carrier"><div class="top"><div><h2>${c.n}</h2><span>${c.z}</span></div><span class="${c.h}">${c.ok} réussies</span></div><dl><dt>Délai moyen</dt><dd>${c.d}</dd><dt>Taux de retour</dt><dd>${c.ret}</dd><dt>Coût moyen par colis</dt><dd>${c.cost}</dd><dt>Colis en cours</dt><dd>${c.act}</dd></dl></section>`).join('')}</div>
+ <section class="panel"><h2>Anomalies à traiter</h2><p class="sub">Tous transporteurs confondus, les plus anciennes en premier.</p><div class="tbl-wrap"><table><thead><tr><th>Colis</th><th>Transporteur</th><th>Wilaya</th><th>Problème</th><th>Depuis</th><th></th></tr></thead><tbody>
+ ${anom.map(o=>`<tr><td><b>${o.id}</b></td><td>${o.carrier}</td><td>${esc(o.wilaya)}</td><td>${esc(o.block)}</td><td>${o.age.replace('il y a ','')}</td><td class="num"><button class="btn ghost sm" data-action="resolve" data-id="${o.id}">${ACT[o.bt]}</button></td></tr>`).join('')}
+ ${extra.map(x=>`<tr><td><b>${x.id}</b></td><td>${x.carrier}</td><td>${x.w}</td><td>${x.p}</td><td>${x.since}</td><td class="num"><button class="btn ghost sm" data-action="toast" data-v="Action enregistrée pour ${x.id}.">${x.a}</button></td></tr>`).join('')}
+ </tbody></table></div></section>
+ <section class="panel rules"><h2>Règles d'attribution</h2><p class="sub">Le transporteur est choisi automatiquement à la création de la commande. Vous pouvez toujours le changer depuis une commande.</p>
+ ${rules.map((r,i)=>`<div class="r"><span>${r[0]}</span><select aria-label="Transporteur pour ${r[0]}" data-action-change="rule">${CARRIERS.map(c=>`<option${c===r[1]?' selected':''}>${c}</option>`).join('')}</select></div>`).join('')}</section></div>`;
+}
+
+/* ---------------- Validations ---------------- */
+const CHECKS={
+ product:[['Liste INCI complète et lisible',1],["Aucun ingrédient de la liste d'exclusion Beauté Pure",1],['Types de peau et besoins renseignés',1],['Photos réelles, fond clair, produit centré',0],['Prix cohérent avec la catégorie',0]],
+ page:[['Contraste lisible (texte 4,5:1, titres 3:1)',1],['Histoire rédigée par la marque, sans promesse médicale',0],['Chaque engagement est justifié par un document',0],['Couverture et logo de bonne qualité',0]],
+ brand:[["Registre de commerce ou carte d'artisan fourni",0],["Visite ou appel vidéo de l'atelier réalisé",0],['Produits conformes à la Charte Beauté Pure',0],['Contrat de commission signé',0]],
+ proof:[['Certificat fourni et lisible',0],['Organisme certificateur reconnu',0],['Certificat en cours de validité',0]]
+};
+function renderValidations(){
+ return `<div class="wrap">${head('Validations','Nouvelles marques, produits, pages modifiées et engagements : tout passe par la Charte Beauté Pure avant d\'être visible par les clientes.','')}
+ ${kpis([['En attente',S.queue.length],['Délai moyen de réponse','31 h','objectif : moins de 48 h'],['Validées ce mois','46'],['Corrections demandées','9']])}
+ <section class="panel"><h2>File d'attente</h2><p class="sub">Les points marqués « Vérifié par l'IA » ont été contrôlés automatiquement. Les autres demandent votre regard.</p>
+ ${S.queue.length?S.queue.map(v=>`<div class="qitem"><div class="avatar">${initials(v.brand)}</div><div><b>${esc(v.brand)} : ${esc(v.title)}</b><span class="m">${esc(v.type)}, reçu ${v.since}</span></div><button class="btn ghost sm" data-action="validate" data-id="${v.id}">Examiner</button></div>`).join(''):'<p class="empty">La file est vide. Tout est à jour.</p>'}</section></div>`;
+}
+function openValidation(id){
+ const v=S.queue.find(x=>x.id===id);if(!v)return;
+ const ch=CHECKS[v.kind];
+ const body=`<p class="hint" style="margin:0 0 14px">Cochez chaque point après vérification. La publication n'est possible que lorsque tout est coché.</p>
+ ${ch.map((c,i)=>`<label class="check"><input type="checkbox" data-chk="${i}"${c[1]?' checked':''}><span class="t">${c[0]}</span>${c[1]?'<span class="auto">Vérifié par l\'IA</span>':''}</label>`).join('')}
+ <div class="field" style="margin-top:16px"><label for="vnote">Message à la marque</label><textarea id="vnote" rows="3" placeholder="Expliquez ce qu'il faut corriger. Ce message apparaît dans son espace marque."></textarea><span class="hint">Obligatoire pour demander des corrections.</span></div>`;
+ openDrawer(esc(v.type),`${esc(v.brand)} : ${esc(v.title)}`,body,`<span class="err" id="verr"></span><button class="btn ghost" data-action="v-fix" data-id="${v.id}">Demander des corrections</button><button class="btn" id="vok" data-action="v-ok" data-id="${v.id}" ${ch.every(c=>c[1])?'':'disabled'}>Valider et publier</button>`);
+}
+
+/* ---------------- Marques ---------------- */
+const BST={active:'<span class="pill ok">Active</span>',review:'<span class="pill info">En validation</span>',suspended:'<span class="pill danger">Suspendue</span>'};
+function renderBrands(){
+ const F=[['all','Toutes'],['Artisan','Artisans'],['Marque nationale','Marques nationales'],['Internationale','Internationales'],['review','En validation'],['suspended','Suspendues']];
+ const match=(b,f)=>f==='all'||b.type===f||b.status===f;
+ const list=S.brands.filter(b=>match(b,S.ui.bf));
+ return `<div class="wrap">${head('Marques','Artisans, marques nationales et produits internationaux sélectionnés. Suivez leurs ventes, leur fiabilité et leur commission.','<button class="btn" data-action="toast" data-v="Invitation envoyée. La marque reçoit un lien vers son espace.">'+ic('plus')+'Inviter une marque</button>')}
+ ${kpis([['Marques actives',S.brands.filter(b=>b.status==='active').length,'objectif : 50 au lancement'],['Artisans',S.brands.filter(b=>b.type==='Artisan').length],['Volume de ventes 30 j',fmt(S.brands.reduce((a,b)=>a+b.gmv,0))+' DZD'],['Retards de remise',S.brands.reduce((a,b)=>a+b.late,0),'sur 30 jours','warn']])}
+ <section class="panel"><div class="toolbar"><div class="tabs">${F.map(x=>`<button class="tab${S.ui.bf===x[0]?' on':''}" data-action="bf" data-v="${x[0]}">${x[1]}<small>${S.brands.filter(b=>match(b,x[0])).length}</small></button>`).join('')}</div></div>
+ <div class="tbl-wrap"><table><thead><tr><th>Marque</th><th>Type</th><th class="num">Produits</th><th class="num">Ventes 30 j</th><th class="num">Commission</th><th class="num">Note</th><th>Fiabilité</th><th>Statut</th><th></th></tr></thead><tbody>
+ ${list.map(b=>`<tr><td><div class="prod" style="min-width:200px"><div class="avatar" style="background:#7FB8CF">${initials(b.name)}</div><div><b>${esc(b.name)}</b><span>${esc(b.city)}</span></div></div></td><td>${b.type}</td><td class="num">${b.prods}</td><td class="num">${fmt(b.gmv)} DZD</td><td class="num">${b.com} %</td><td class="num">${b.rating?String(b.rating).replace('.',','):'—'}</td><td>${b.late===0?'<span class="hp">À l\'heure</span>':b.late<3?`<span class="hp warn">${b.late} retard</span>`:`<span class="hp danger">${b.late} retards</span>`}</td><td>${BST[b.status]}</td><td class="num"><button class="btn ghost sm" data-action="brand" data-id="${b.id}">Ouvrir</button></td></tr>`).join('')||'<tr><td colspan="9" class="empty">Aucune marque dans cette catégorie.</td></tr>'}
+ </tbody></table></div></section></div>`;
+}
+function openBrand(id){
+ const b=S.brands.find(x=>x.id===id);
+ const body=`${b.note?`<div class="alertbox">${ic('alert')}<div><b>Motif de suspension</b>${esc(b.note)}</div></div>`:''}
+ ${kpis([['Ventes 30 j',fmt(b.gmv)+' DZD'],['Produits',b.prods],['Retards de remise',b.late]],'k3')}
+ <div class="sec" style="margin-top:18px"><div class="sec-t">Informations</div><div class="infogrid"><div><div class="k">Type</div>${b.type}</div><div><div class="k">Ville</div>${esc(b.city)}</div><div><div class="k">Contact</div>${esc(b.contact)}</div><div><div class="k">Note clientes</div>${b.rating?String(b.rating).replace('.',',')+' / 5':'Pas encore d\'avis'}</div></div></div>
+ <div class="sec"><div class="sec-t">Commission</div><div class="field" style="max-width:220px"><label for="bcom">Commission sur les ventes (%)</label><input id="bcom" type="number" min="0" max="40" value="${b.com}"><span class="hint">Appliquée aux prochaines commandes. La marque est prévenue par e-mail.</span></div></div>`;
+ const foot=`${b.status==='suspended'?`<button class="btn ghost" data-action="b-status" data-id="${b.id}" data-v="active">Réactiver la marque</button>`:b.status==='active'?`<button class="btn ghost" data-action="b-status" data-id="${b.id}" data-v="suspended">Suspendre la marque</button>`:''}<button class="btn" data-action="b-save" data-id="${b.id}">Enregistrer</button>`;
+ openDrawer(esc(b.name),`${b.type}, ${esc(b.city)}`,body,foot);
+}
+
+/* ---------------- Salons ---------------- */
+function renderSalons(){
+ const f=S.ui.sf,list=S.salons.filter(s=>f==='all'||(f==='trained'&&s.trained)||(f==='todo'&&!s.trained));
+ return `<div class="wrap">${head('Salons partenaires','Le réseau terrain : les salons recommandent withyou avec leur code, testent les produits et renvoient l\'avis de leurs clientes.','<button class="btn" data-action="toast" data-v="Invitation envoyée au salon.">'+ic('plus')+'Ajouter un salon</button>')}
+ ${kpis([['Salons partenaires','64','objectif : 100'],['Formés',S.salons.filter(s=>s.trained).length+36,'sur 64'],['Recommandations 30 j','1 204','+18 %'],['Ventes générées 30 j','612 000 DZD']])}
+ <section class="panel"><h2>Demandes de test des marques</h2><p class="sub">Envoyées depuis l'espace marque. Choisissez le salon qui correspond le mieux à la cible du produit.</p>
+ ${S.testReq.length?S.testReq.map((t,i)=>`<div class="qitem"><div class="avatar">${initials(t.brand)}</div><div><b>${esc(t.prod)}</b><span class="m">${esc(t.brand)}, ${t.n} échantillons, wilaya : ${esc(t.wilaya)}</span></div><div class="assign"><select id="ts${i}" aria-label="Salon pour ${esc(t.prod)}">${S.salons.filter(s=>s.trained).map(s=>`<option>${esc(s.name)}, ${esc(s.wilaya)}</option>`).join('')}</select><button class="btn sm" data-action="assign-test" data-i="${i}">Attribuer</button></div></div>`).join(''):'<p class="empty">Aucune demande en attente.</p>'}</section>
+ <section class="panel"><div class="toolbar"><div class="tabs">${[['all','Tous'],['trained','Formés'],['todo','À former']].map(x=>`<button class="tab${f===x[0]?' on':''}" data-action="sf" data-v="${x[0]}">${x[1]}</button>`).join('')}</div></div>
+ <div class="tbl-wrap"><table><thead><tr><th>Salon</th><th>Wilaya</th><th>Code partenaire</th><th class="num">Recommandations 30 j</th><th class="num">Ventes générées</th><th>Formation</th><th></th></tr></thead><tbody>
+ ${list.map(s=>`<tr><td><b>${esc(s.name)}</b><div class="muted" style="font-size:12.5px">${s.type}</div></td><td>${esc(s.wilaya)}</td><td><code style="font-size:13px">${s.code}</code></td><td class="num">${s.reco}</td><td class="num">${fmt(s.sales)} DZD</td><td>${s.trained?'<span class="pill ok">Formé</span>':'<span class="pill warn">À former</span>'}</td><td class="num">${s.trained?'':`<button class="btn ghost sm" data-action="train" data-name="${esc(s.name)}">Planifier</button>`}</td></tr>`).join('')}
+ </tbody></table></div></section></div>`;
+}
+
+/* ---------------- Spécialistes ---------------- */
+function renderSpecialists(){
+ const t=S.ui.pt,all=[...S.experts.map(e=>e.name),...S.creators.map(c=>c.name)];
+ const cards=t==='experts'?S.experts.map(e=>`<section class="panel"><div class="person"><div class="avatar" style="background:#7FB8CF">${initials(e.name)}</div><div style="flex:1"><h3>${esc(e.name)}</h3><div class="role">${e.role}, ${e.city}</div><p>${e.mission}</p><div class="load${e.load>=85?' hi':''}"><div class="top"><span>Charge de travail</span><span>${e.load} %</span></div><div class="track"><b style="width:${e.load}%"></b></div></div><div class="mini"><div><b>${e.open}</b>missions ouvertes</div><div><b>${e.rating} / 5</b>note des marques</div><div><b style="font-size:13.5px">${e.avail}</b>disponibilités</div></div></div></div></section>`).join('')
+ :S.creators.map(c=>`<section class="panel"><div class="person"><div class="avatar" style="background:#C9A3B0">${initials(c.name)}</div><div style="flex:1"><h3>${esc(c.name)}</h3><div class="role">${c.role}, ${c.city}</div><div class="mini"><div><b>${c.reach}</b>audience</div><div><b>${c.camp}</b>campagnes en cours</div><div><b style="font-size:13.5px">${c.brands}</b>marques</div></div></div></div></section>`).join('');
+ return `<div class="wrap">${head('Spécialistes beauté','Les experts qui garantissent la qualité des conseils, et les créatrices formées qui racontent les marques.','<button class="btn" data-action="toast" data-v="Invitation envoyée.">'+ic('plus')+'Ajouter un spécialiste</button>')}
+ <section class="panel"><h2>Missions à attribuer</h2><p class="sub">Dont les réponses que l'assistant IA a transmises faute d'être sûr de lui.</p>
+ ${S.missions.map((m,i)=>`<div class="qitem"><div class="avatar" style="background:${m.to?'var(--leaf)':'#7FB8CF'}">${m.to?ic('check'):initials(m.type)}</div><div><b>${esc(m.t)}</b><span class="m">${m.type}, ${m.due}${m.to?`. Attribuée à ${esc(m.to)}`:''}</span></div>${m.to?'<span class="pill ok">Attribuée</span>':`<div class="assign"><select id="ms${i}" aria-label="Spécialiste pour ${esc(m.t)}">${(m.type==='Influence'?S.creators.map(c=>c.name):S.experts.map(e=>e.name)).map(n=>`<option>${esc(n)}</option>`).join('')}</select><button class="btn sm" data-action="assign-mission" data-i="${i}">Attribuer</button></div>`}</div>`).join('')}</section>
+ <div class="tabs">${[['experts','Experts beauté'],['creators','Créatrices']].map(x=>`<button class="tab${t===x[0]?' on':''}" data-action="pt" data-v="${x[0]}">${x[1]}</button>`).join('')}</div>
+ <div class="people">${cards}</div></div>`;
+}
+
+/* ---------------- Box ---------------- */
+function renderBox(){
+ const P={ok:'<span class="pill ok">Réuni</span>',short:'<span class="pill danger">Stock insuffisant</span>',wait:'<span class="pill warn">Sans réponse</span>'};
+ return `<div class="wrap">${head('Box Rituel d\'octobre','Assemblage le 28 septembre, expédition à partir du 1er octobre. Une variante par type de peau.','')}
+ ${kpis([['Abonnées actives','842','+46 ce mois'],['Jours avant assemblage','5','','warn'],['Produits réunis',S.boxItems.filter(x=>x.st==='ok').length+' sur '+S.boxItems.length],['Désabonnements','3,1 %','-0,4 point']])}
+ <div class="grid g2"><section class="panel"><h2>Produits à réunir</h2><p class="sub">Besoin calculé à partir du nombre d'abonnées par type de peau.</p><div class="tbl-wrap"><table><thead><tr><th>Produit</th><th>Variantes</th><th class="num">Besoin</th><th class="num">Confirmé</th><th>État</th><th></th></tr></thead><tbody>
+ ${S.boxItems.map((x,i)=>`<tr><td><b>${esc(x.p)}</b><div class="muted" style="font-size:12.5px">${esc(x.b)}</div></td><td>${x.v}</td><td class="num">${fmt(x.need)}</td><td class="num">${fmt(x.have)}</td><td>${P[x.st]}</td><td class="num">${x.st==='ok'?'':`<button class="btn ghost sm" data-action="box-remind" data-p="${esc(x.p)}">Relancer</button>`}</td></tr>`).join('')}
+ </tbody></table></div></section>
+ <section class="panel"><h2>Abonnées par variante</h2><p class="sub">Types de peau déclarés ou issus du scan.</p>${bars([['Peau mixte',38],['Peau sèche',24],['Peau grasse',21],['Peau sensible',17]])}</section></div>
+ <section class="panel"><h2>Candidatures des marques</h2><p class="sub">Produits proposés depuis l'espace marque pour la box de novembre.</p>
+ ${S.cands.map((c,i)=>`<div class="qitem"><div class="avatar">${initials(c.b)}</div><div><b>${esc(c.p)}</b><span class="m">${esc(c.b)}, pour : ${c.v}</span></div>${c.st==='new'?`<div class="assign"><button class="btn ghost sm" data-action="cand" data-i="${i}" data-v="no">Refuser</button><button class="btn sm" data-action="cand" data-i="${i}" data-v="yes">Retenir</button></div>`:c.st==='yes'?'<span class="pill ok">Retenue</span>':'<span class="pill mute">Refusée</span>'}</div>`).join('')}</section></div>`;
+}
+
+/* ---------------- Analyses ---------------- */
+function renderAnalytics(){
+ const per=S.ui.period,f={7:.24,30:1,90:2.9}[per];
+ const lab={7:['17 sept.','20 sept.','23 sept.'],30:['25 août','8 sept.','23 sept.'],90:['26 juin','9 août','23 sept.']}[per];
+ const funnel=[['Arrivées sur l\'app',12400],['Questionnaire terminé',7900],['Routine affichée',7600],['Produit gardé',2900],['Achat',1486]];
+ return `<div class="wrap">${head('Analyses','La santé de la plateforme, la performance de l\'IA et la demande qui n\'est pas encore couverte.',`<div class="tabs">${[7,30,90].map(p=>`<button class="tab${per===p?' on':''}" data-action="period" data-v="${p}">${p} jours</button>`).join('')}</div>`)}
+ ${kpis([['Volume de ventes',fmt(4212000*f)+' DZD','+14 %'],['Revenu withyou',fmt(712400*f)+' DZD','+17 %'],['Commandes',fmt(1486*f)],['Panier moyen','2 830 DZD','+4 %']])}
+ <div class="grid g2"><section class="panel"><h2>Volume de ventes</h2><p class="sub">Toutes marques confondues, en dinars.</p>${areaChart(series(per,140000,1.3))}<div class="axis">${lab.map(l=>`<span>${l}</span>`).join('')}</div></section>
+ <section class="panel"><h2>D'où vient le revenu</h2><p class="sub">Part de chaque source dans le revenu withyou.</p>${bars([['Commissions',68],['Box Rituel',21],['Placements',8],['Tests et influence',3]])}</section></div>
+ <div class="grid g2e"><section class="panel"><h2>Parcours d'onboarding</h2><p class="sub">De l'arrivée à l'achat, sur ${per} jours.</p><div class="funnel">${funnel.map((s,i)=>`<div class="f"><div class="top"><span>${s[0]}</span><b>${fmt(s[1]*f)}</b></div><div class="bar"><b style="width:${(s[1]/funnel[0][1]*100).toFixed(1)}%"></b></div></div>${i<funnel.length-1?`<div class="drop-rate">${(funnel[i+1][1]/s[1]*100).toFixed(1).replace('.',',')} % passent à l'étape suivante</div>`:''}`).join('')}</div></section>
+ <section class="panel"><h2>Performance de l'IA</h2><p class="sub">Les recommandations font-elles vendre mieux que la recherche classique ?</p>
+ ${kpis([['Achats issus d\'une recommandation','62 %'],['Score moyen des produits achetés','89 %']],'k3" style="grid-template-columns:1fr 1fr')}
+ <div style="margin-top:18px">${bars([['Recommandation IA',68],['Recherche classique',29]],'‰')}</div><p class="hint">Taux d'achat pour 1 000 produits affichés.</p>
+ <div class="insight" style="margin-top:14px">${ic('bulb')}<div><p>Les clientes à peau sensible achètent 2 fois moins que la moyenne après leur routine. 3 produits recommandés n'ont pas de liste INCI complète.</p><a class="btn sm" href="#/validations">Voir les validations</a></div></div></section></div>
+ <div class="grid g2e"><section class="panel"><h2>Ce qu'elles cherchent sans le trouver</h2><p class="sub">Recherches sans résultat : des marques à recruter.</p><ul class="queries">${[['SPF teinté',842],['shampoing sans sulfate',610],['déodorant naturel',455],['soin barbe',210],['huile de nigelle',188]].map(q=>`<li><span>« ${q[0]} »</span><span style="display:flex;gap:12px;align-items:center"><b class="num">${fmt(q[1]*f)}</b><button class="btn ghost sm" data-action="toast" data-v="Ajouté à la liste de marques à recruter : ${q[0]}.">Recruter</button></span></li>`).join('')}</ul></section>
+ <section class="panel"><h2>Profils et wilayas</h2><p class="sub">Données agrégées de toutes les clientes.</p>${bars([['Mixte',38],['Sèche',24],['Grasse',21],['Sensible',17]])}<h3 style="margin:18px 0 12px">Wilayas</h3>${bars([['Alger',44],['Oran',13],['Tizi Ouzou',11],['Constantine',8],['Autres',24]])}</section></div>
+ <div class="privacy">${ic('lock')}<div>Les profils de peau individuels restent internes à withyou. Les marques ne voient que des données agrégées sur au moins 20 clientes.</div></div></div>`;
+}
+
+/* ---------------- Drawer, toast ---------------- */
+let lastFocus=null;
+function openDrawer(t,sub,body,foot){lastFocus=document.activeElement;const d=$('#drawer');d.innerHTML=`<div class="dhead"><div><h2 id="dtitle">${t}</h2>${sub?`<p>${sub}</p>`:''}</div><button class="x" data-action="close" aria-label="Fermer">${ic('x')}</button></div><div class="dbody">${body}</div><div class="dfoot">${foot}</div>`;d.classList.add('open');$('#overlay').classList.add('open');document.body.style.overflow='hidden';setTimeout(()=>{const b=d.querySelector('.x');b&&b.focus()},250)}
+function closeDrawer(){$('#drawer').classList.remove('open');$('#overlay').classList.remove('open');document.body.style.overflow='';lastFocus&&lastFocus.focus&&lastFocus.focus()}
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3200)}
+
+/* ---------------- Nav & router ---------------- */
+const NAV=[['jour','Vue du jour','home'],['commandes','Commandes','bag'],['livraisons','Livraisons','truck'],['validations','Validations','shield'],['marques','Marques','store'],['salons','Salons partenaires','scissors'],['specialistes','Spécialistes beauté','users'],['box','Box Rituel','gift'],['analyses','Analyses','chart']];
+const R={jour:renderToday,commandes:renderOrders,livraisons:renderDeliveries,validations:renderValidations,marques:renderBrands,salons:renderSalons,specialistes:renderSpecialists,box:renderBox,analyses:renderAnalytics};
+function renderNav(cur){const c={commandes:blocked().length,validations:S.queue.length,livraisons:S.orders.filter(o=>o.block&&(o.bt==='carrier'||o.bt==='client')).length};
+ $('#nav').innerHTML=NAV.map(n=>`<a href="#/${n[0]}" class="${n[0]===cur?'on':''}"${n[0]===cur?' aria-current="page"':''}>${ic(n[2])}<span>${n[1]}</span>${c[n[0]]?`<span class="count">${c[n[0]]}</span>`:''}</a>`).join('')}
+const cur=()=>{const r=location.hash.replace('#/','');return R[r]?r:'jour'};
+function render(){const r=cur();main.innerHTML=R[r]();renderNav(r)}
+window.addEventListener('hashchange',()=>{closeDrawer();render();window.scrollTo(0,0);main.focus({preventScroll:true})});
+
+function resolve(id){const o=S.orders.find(x=>x.id===id);if(!o||!o.block)return;const msg={brand:`Relance envoyée à ${o.brands.find(b=>!b.ok)?.n||'la marque'}. Rappel automatique demain à 10 h.`,client:'Nouvelle tentative de livraison programmée demain. SMS envoyé à la cliente.',pay:'Paiement confirmé par la SATIM. Collecte lancée.',quality:'Remplacement reçu. La commande repart en emballage.',carrier:'Ticket ouvert chez '+o.carrier+'. Réponse attendue sous 24 h.'}[o.bt];
+ if(o.bt==='pay'){o.step=1}if(o.bt==='brand'){o.brands.forEach(b=>b.ok=true);o.step=2}
+ o.block=null;delete o.bt;save();closeDrawer();render();toast(msg)}
+
+document.addEventListener('click',e=>{
+ const t=e.target.closest('[data-action]');if(!t)return;const a=t.dataset.action,v=t.dataset.v,id=t.dataset.id;
+ switch(a){
+  case 'close':closeDrawer();break;
+  case 'toast':toast(v);break;
+  case 'of':S.ui.of=v;render();break;
+  case 'of-blocked':S.ui.of='blocked';break;
+  case 'bf':S.ui.bf=v;render();break;
+  case 'sf':S.ui.sf=v;render();break;
+  case 'pt':S.ui.pt=v;render();break;
+  case 'period':S.ui.period=+v;render();break;
+  case 'order':openOrder(id);break;
+  case 'resolve':resolve(id);break;
+  case 'refund':closeDrawer();toast(`Remboursement de ${id} demandé. Validation par la comptabilité sous 24 h.`);break;
+  case 'call':toast('Appel lancé depuis le standard withyou.');break;
+  case 'validate':openValidation(id);break;
+  case 'v-fix':{const n=$('#vnote').value.trim();if(!n){$('#verr').textContent='Écrivez le message à la marque.';$('#vnote').focus();break}
+   const q=S.queue.find(x=>x.id===id);S.queue=S.queue.filter(x=>x.id!==id);save();closeDrawer();render();toast(`Corrections demandées à ${q.brand}.`);break}
+  case 'v-ok':{const q=S.queue.find(x=>x.id===id);S.queue=S.queue.filter(x=>x.id!==id);if(q.brandId){const b=S.brands.find(x=>x.id===q.brandId);if(b)b.status='active'}save();closeDrawer();render();toast(`Validé et publié : ${q.title}.`);break}
+  case 'brand':openBrand(id);break;
+  case 'b-save':{const b=S.brands.find(x=>x.id===id),c=+$('#bcom').value;if(!(c>=0&&c<=40)){toast('La commission doit être comprise entre 0 et 40 %.');break}b.com=c;save();closeDrawer();render();toast(`Commission de ${b.name} enregistrée : ${c} %.`);break}
+  case 'b-status':{const b=S.brands.find(x=>x.id===id);b.status=v;if(v==='active')delete b.note;else b.note='Suspendue manuellement le 23 septembre';save();closeDrawer();render();toast(v==='active'?`${b.name} est réactivée.`:`${b.name} est suspendue. Ses produits sont masqués.`);break}
+  case 'assign-test':{const i=+t.dataset.i,s=$('#ts'+i).value,r=S.testReq[i];S.testReq.splice(i,1);save();render();toast(`Test attribué à ${s.split(',')[0]}. ${r.brand} est prévenue.`);break}
+  case 'train':toast(`Formation proposée à ${t.dataset.name} avec Sabrina Kaci.`);break;
+  case 'assign-mission':{const i=+t.dataset.i;S.missions[i].to=$('#ms'+i).value;save();render();toast(`Mission attribuée à ${S.missions[i].to}.`);break}
+  case 'box-remind':toast(`Relance envoyée pour ${t.dataset.p}.`);break;
+  case 'cand':{const c=S.cands[+t.dataset.i];c.st=v;save();render();toast(v==='yes'?`${c.p} retenu pour la box de novembre.`:`Candidature refusée. ${c.b} est prévenue.`);break}
+ }
+});
+document.addEventListener('change',e=>{
+ const t=e.target;
+ if(t.matches('[data-chk]')){const all=[...document.querySelectorAll('[data-chk]')].every(x=>x.checked);const b=$('#vok');if(b)b.disabled=!all}
+ if(t.id==='ocar'){const o=S.orders.find(x=>x.id===t.dataset.oid);o.carrier=t.value;save();render();toast(`Transporteur changé : ${t.value}.`)}
+ if(t.dataset.actionChange==='rule')toast('Règle enregistrée pour les prochaines commandes.');
+});
+document.addEventListener('input',e=>{if(e.target.id==='oq'){S.ui.oq=e.target.value;$('#otable').innerHTML=orderRows()}if(e.target.id==='vnote'){const r=$('#verr');if(r)r.textContent=''}});
+$('#overlay').addEventListener('click',closeDrawer);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#drawer').classList.contains('open'))closeDrawer()});
+render();
+})();
+
+</script>
+</body>
+</html>

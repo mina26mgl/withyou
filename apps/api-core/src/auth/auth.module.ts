@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { PrismaService } from '../prisma/prisma.service';
 
+// Registration/login are now handled by Clerk (see ../webhooks/clerk-webhook.*).
+// This module only registers the 'jwt' passport strategy still used by
+// AuthGuard('jwt') on a few legacy routes (commandes, produits).
 @Module({
   imports: [
     PassportModule,
@@ -14,7 +14,6 @@ import { PrismaService } from '../prisma/prisma.service';
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? '15m' },
     }),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, PrismaService],
+  providers: [JwtStrategy],
 })
 export class AuthModule {}

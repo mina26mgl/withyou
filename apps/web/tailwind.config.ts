@@ -1,14 +1,10 @@
 import type { Config } from "tailwindcss";
+import withyouBaseConfig from "@withyou/ui-config";
 
 const config: Config = {
+  presets: [withyouBaseConfig as Config],
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
-    screens: {
-      sm: "375px",
-      md: "430px",
-      lg: "768px",
-      xl: "1024px",
-    },
     extend: {
       colors: {
         primary: {

@@ -1,0 +1,6 @@
+# Offline training (V3) — not needed to serve V0
+-r requirements.txt
+lightgbm>=4.3
+mlflow>=2.14
+# Optional: replace TF-IDF by embeddings (encoder.text_encoder: sentence_transformer)
+# sentence-transformers>=3.0

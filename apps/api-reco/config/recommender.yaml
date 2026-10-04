@@ -1,0 +1,36 @@
+# Overrides of app/recommender/config.py. Only list what you change.
+# These numbers are hand-picked starting values for the cold start (V0);
+# revisit them once real interactions can be used to evaluate them.
+
+version: v0-rules
+
+weights:
+  for_you:
+    skin_match: 0.35
+    concern_match: 0.30
+    budget_match: 0.15
+    ingredient_match: 0.10
+    popularity: 0.10
+
+filters:
+  budget_hard_tolerance: 1.25
+
+diversity:
+  max_per_category: 3
+  max_per_brand: 2
+  mmr_lambda: 0.75
+
+encoder:
+  # Switch to "sentence_transformer" (pip install sentence-transformers) without
+  # touching the rest of the pipeline.
+  text_encoder: tfidf
+
+behavior:
+  decay_lambda_per_day: 0.03
+
+collaborative:
+  min_users: 50
+  min_interactions: 1000
+
+ltr:
+  enabled: false

@@ -7,9 +7,10 @@ import { CreateProduitDto } from './dto/create-produit.dto';
 export class ProduitsController {
   constructor(private readonly produitsService: ProduitsService) {}
 
+  /** Catalogue client : uniquement les produits en ligne des marques publiées. */
   @Get()
-  findActive() {
-    return this.produitsService.findActive();
+  findPublic() {
+    return this.produitsService.findPublic();
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -20,7 +21,7 @@ export class ProduitsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.produitsService.findById(id);
+    return this.produitsService.findPublicById(id);
   }
 
   @UseGuards(AuthGuard('jwt'))

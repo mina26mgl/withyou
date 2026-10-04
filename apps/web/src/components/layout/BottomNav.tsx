@@ -2,6 +2,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { DEFAULT_AVATAR } from "@/lib/defaultAvatar";
+import { useProfilePhoto } from "@/lib/photoStore";
+import { SCAN_IA_ENABLED } from "@/lib/features";
+import { useTrousse } from "@/lib/trousse";
 
 const IconHome = ({ active }: { active: boolean }) => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" strokeWidth="1.8" stroke={active ? "#1a1a1a" : "#667085"} strokeLinecap="round" strokeLinejoin="round">
@@ -39,10 +43,9 @@ const tabs = [
   { href: "/home", icon: IconHome },
   { href: "/panier", icon: IconBag },
   { href: "/search", icon: IconSearch },
-  { href: "/profil/skin-scan", icon: IconScan },
+  ...(SCAN_IA_ENABLED ? [{ href: "/profil/skin-scan", icon: IconScan }] : []),
 ];
 
-const mockAvatar = "https://i.pravatar.cc/150?img=47";
 
 function JasmineDecoration() {
   return (
@@ -59,6 +62,8 @@ function JasmineDecoration() {
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const photo = useProfilePhoto();
+  const trousseCount = useTrousse().reduce((sum, i) => sum + i.quantite, 0);
 
   return (
     <nav
@@ -82,7 +87,7 @@ export default function BottomNav() {
           <Link
             key={href}
             href={href}
-            className="flex items-center justify-center flex-shrink-0 transition-all duration-200"
+            className="relative flex items-center justify-center flex-shrink-0 transition-all duration-200"
             style={{
               width: "28px",
               height: "28px",
@@ -100,6 +105,30 @@ export default function BottomNav() {
             }}
           >
             <Icon active={active} />
+            {href === "/panier" && trousseCount > 0 && (
+              <span
+                aria-label={`${trousseCount} produit(s) dans ma trousse`}
+                className="absolute flex items-center justify-center"
+                style={{
+                  top: "-5px",
+                  right: "-6px",
+                  minWidth: "15px",
+                  height: "15px",
+                  padding: "0 4px",
+                  borderRadius: "100px",
+                  background: "#07320D",
+                  border: "1.5px solid #FFFFFF",
+                  boxSizing: "border-box",
+                  fontFamily: "var(--font-inter), system-ui, sans-serif",
+                  fontSize: "9px",
+                  fontWeight: 600,
+                  color: "#FFFFFF",
+                  lineHeight: 1,
+                }}
+              >
+                {trousseCount}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -119,7 +148,7 @@ export default function BottomNav() {
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={mockAvatar} alt="Profil" className="w-full h-full object-cover" />
+          <img src={photo ?? DEFAULT_AVATAR} alt="Profil" className="w-full h-full object-cover" />
         </div>
       </Link>
     </nav>

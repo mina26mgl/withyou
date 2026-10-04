@@ -1,55 +1,35 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import type { PublicProduct } from "@withyou/shared-types";
+import { api } from "@/lib/api";
+import { useOnboardingStep, type ConsumerProfile } from "@/lib/onboarding";
+import { fitScore, formatPrice } from "@/lib/routine";
+import { addToTrousse } from "@/lib/trousse";
 
 type Product = {
-  id: number;
+  id: string;
   brand: string;
-  brandLogo: string;
+  brandLogo: string | null;
   name: string;
-  image: string;
+  image: string | null;
   price: number;
-  match: number;
+  /** « % adapté » d'après le quiz ; null sans réponses (badge masqué). */
+  match: number | null;
 };
 
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: 1,
-    brand: "Azul Cosmetiq...",
-    brandLogo: "/azul-logo.svg",
-    name: "Azar - Rituel Nettoyant et Démaquillant aux Huiles...",
-    image: "/azul-product.webp",
-    price: 2800,
-    match: 92,
-  },
-  {
-    id: 2,
-    brand: "Azul Cosmetiq...",
-    brandLogo: "/azul-logo.svg",
-    name: "Thala - Rituel hydratant visage (50ml)",
-    image: "/ivoire-product.svg",
-    price: 2800,
-    match: 92,
-  },
-  {
-    id: 3,
-    brand: "Dihya",
-    brandLogo: "/azul-logo.svg",
-    name: "Sérum Éclat à l'huile de rose musquée",
-    image: "/dihya-product.jpg",
-    price: 3200,
-    match: 88,
-  },
-  {
-    id: 4,
-    brand: "Gateline",
-    brandLogo: "/azul-logo.svg",
-    name: "Crème Nourrissante au Karité & Miel",
-    image: "/gateline-product.jpg",
-    price: 2500,
-    match: 95,
-  },
-];
+function toSlide(p: PublicProduct, profile: ConsumerProfile | null): Product {
+  return {
+    id: p.id,
+    brand: p.marque.nom,
+    brandLogo: p.marque.logoUrl,
+    name: p.nom,
+    image: p.imagesUrls[0] ?? null,
+    price: p.prix,
+    match: fitScore(p, profile),
+  };
+}
 
 function BagIcon() {
   return (
@@ -63,9 +43,26 @@ function BagIcon() {
 const CARD_WIDTH = 193.5;
 const GAP = 12;
 
-export default function ProductSlider({ title, hideBrandRow, titleColor = "#07320D", cardColor, textColor = "#031A06" }: { title: string; hideBrandRow?: boolean; titleColor?: string; cardColor?: string; textColor?: string }) {
+export default function ProductSlider({ title, hideBrandRow, titleColor = "#07320D", cardColor, textColor = "#031A06", limit }: { title: string; hideBrandRow?: boolean; titleColor?: string; cardColor?: string; textColor?: string; /** Nombre maximum de produits affichés (tous par défaut). */ limit?: number }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  // Catalogue client : seulement les produits en ligne des marques publiées.
+  const [catalogue, setCatalogue] = useState<PublicProduct[]>([]);
+  const { saved: profile } = useOnboardingStep();
+  const products = catalogue.map((p) => toSlide(p, profile));
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<PublicProduct[]>("/produits")
+      .then((list) => {
+        if (!cancelled) setCatalogue(limit ? list.slice(0, limit) : list);
+      })
+      .catch((err) => console.error("Produits indisponibles:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [limit]);
 
   function handleScroll() {
     const el = scrollRef.current;
@@ -78,6 +75,9 @@ export default function ProductSlider({ title, hideBrandRow, titleColor = "#0732
     if (el) el.scrollTo({ left: index * (CARD_WIDTH + GAP), behavior: "smooth" });
     setActiveIndex(index);
   }
+
+  // Aucun produit en ligne : pas de section vide.
+  if (products.length === 0) return null;
 
   return (
     <section className="mt-6">
@@ -101,7 +101,7 @@ export default function ProductSlider({ title, hideBrandRow, titleColor = "#0732
           paddingRight: "20px",
         }}
       >
-        {MOCK_PRODUCTS.map((product) => (
+        {products.map((product, i) => (
           /* Carte – pas de shadow, pas de border */
           <div
             key={product.id}
@@ -132,13 +132,19 @@ export default function ProductSlider({ title, hideBrandRow, titleColor = "#0732
                 className="relative flex-shrink-0 overflow-hidden rounded-lg"
                 style={{ width: "32px", height: "32px" }}
               >
-                <Image
-                  src={product.brandLogo}
-                  alt={product.brand}
-                  fill
-                  className="object-contain"
-                  sizes="32px"
-                />
+                {product.brandLogo ? (
+                  <Image
+                    src={product.brandLogo}
+                    alt={product.brand}
+                    fill
+                    className="object-contain"
+                    sizes="32px"
+                  />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center bg-[#EAF6EE] text-xs font-semibold text-[#07320D]">
+                    {product.brand.slice(0, 2).toUpperCase()}
+                  </span>
+                )}
               </div>
               <span
                 className="flex-1 truncate"
@@ -161,7 +167,8 @@ export default function ProductSlider({ title, hideBrandRow, titleColor = "#0732
             )}
 
             {/* ── Div 2 : Produit (nom + image) ── 193.5 × 317 px */}
-            <div
+            <Link
+              href={`/produit/${product.id}`}
               className="flex flex-col overflow-hidden"
               style={{
                 width: "193.5px",
@@ -202,13 +209,17 @@ export default function ProductSlider({ title, hideBrandRow, titleColor = "#0732
                   boxShadow: "1px 1px 3px 0px rgba(0,0,0,0.04), 4px 4px 6px 0px rgba(0,0,0,0.03), 9px 9px 8px 0px rgba(0,0,0,0.02), 16px 17px 9px 0px rgba(0,0,0,0.01), 24px 26px 10px 0px rgba(0,0,0,0)",
                 }}
               >
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  sizes="170px"
-                  className="object-cover"
-                />
+                {product.image ? (
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    fill
+                    sizes="170px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-[#EAF6EE]" />
+                )}
                 {/* Overlay border blanc – positionné à l'intérieur de l'image */}
                 <div
                   className="absolute pointer-events-none"
@@ -225,7 +236,7 @@ export default function ProductSlider({ title, hideBrandRow, titleColor = "#0732
                   }}
                 />
               </div>
-            </div>
+            </Link>
 
             {/* ── Div 3 : Prix + taux + bouton ── */}
             <div className="flex flex-col" style={{ gap: "8px" }}>
@@ -251,7 +262,7 @@ export default function ProductSlider({ title, hideBrandRow, titleColor = "#0732
                     fontFamily: "var(--font-inter), system-ui, sans-serif",
                     fontSize: "18px", fontWeight: 700, color: textColor, letterSpacing: "-0.03em", lineHeight: 1, textAlign: "center",
                   }}>
-                    {product.price.toLocaleString("fr-DZ")}
+                    {formatPrice(product.price)}
                   </span>
                   <span style={{
                     fontFamily: "var(--font-inter), system-ui, sans-serif",
@@ -261,7 +272,8 @@ export default function ProductSlider({ title, hideBrandRow, titleColor = "#0732
                   </span>
                 </div>
 
-                {/* Chip Taux – 95.75 × 52 px */}
+                {/* Chip Taux – 95.75 × 52 px (affichée quand un score d'adaptation existe) */}
+                {product.match != null && (
                 <div
                   className="flex flex-col items-center justify-center"
                   style={{
@@ -299,10 +311,12 @@ export default function ProductSlider({ title, hideBrandRow, titleColor = "#0732
                     }} />
                   </div>
                 </div>
+                )}
               </div>
 
               {/* Partie 2 : Bouton "Garder ce produit" – 193.5 × 44 px */}
               <button
+                onClick={() => addToTrousse(catalogue[i])}
                 className="flex items-center justify-center transition-opacity hover:opacity-90"
                 style={{
                   width: "193.5px",
@@ -341,7 +355,7 @@ export default function ProductSlider({ title, hideBrandRow, titleColor = "#0732
           boxShadow: "0.67px 0px 0.67px 0px rgba(0,0,0,0.01)",
         }}
       >
-        {MOCK_PRODUCTS.map((_, i) => (
+        {products.map((_, i) => (
           <button
             key={i}
             onClick={() => scrollTo(i)}

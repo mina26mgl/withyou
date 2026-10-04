@@ -23,9 +23,9 @@ export class SearchController {
     const { results: hits } = (await res.json()) as { results: ProduitHit[] };
 
     const produits = await this.prisma.produit.findMany({
-      where: { id: { in: hits.map((hit) => hit.id) } },
+      where: { id_product: { in: hits.map((hit) => hit.id) } },
     });
-    const produitsById = new Map(produits.map((produit) => [produit.id, produit]));
+    const produitsById = new Map(produits.map((produit) => [produit.id_product, produit]));
 
     return hits.map((hit) => produitsById.get(hit.id)).filter((produit) => produit !== undefined);
   }

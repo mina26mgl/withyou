@@ -1,0 +1,29 @@
+# Standalone stack for the recommendation service (PostgreSQL + API).
+#   docker compose up --build
+#   docker compose exec api python scripts/seed_dev_catalog.py
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: withyou
+      POSTGRES_PASSWORD: withyou
+      POSTGRES_DB: withyou
+    ports: ["5433:5432"]
+    volumes: [reco-db:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U withyou"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://withyou:withyou@db:5432/withyou
+      ADMIN_TOKEN: change-me
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    ports: ["8001:8001"]
+    depends_on:
+      db: {condition: service_healthy}
+
+volumes:
+  reco-db:

@@ -1,0 +1,5 @@
+!.env.example
+.pytest_cache/
+mlruns/
+artifacts/
+*.egg-info/

@@ -1,4 +1,40 @@
 @import "tailwindcss";
+
+/* Palette et polices de l'espace marque. Tailwind v4 ne lit pas tailwind.config.ts
+   (ni le preset @withyou/ui-config) sans directive @config : sans ce bloc, aucune
+   classe partner-* (bg-partner-card, text-partner-muted, font-partner…) n'était générée.
+   Valeurs reprises telles quelles de packages/ui-config/tailwind.config.ts. */
+@theme {
+  --color-partner-bg: #FAFCFD;
+  --color-partner-card: #FFFFFF;
+  --color-partner-ink: #1F2B24;
+  --color-partner-muted: #6B7A71;
+  --color-partner-border: #E6ECEA;
+  --color-partner-heading: #173A24;
+  --color-partner-cta: #173A24;
+  --color-partner-ctaHover: #24523A;
+  --color-partner-leaf: #3A9A5E;
+  --color-partner-leafBg: #EAF6EE;
+  --color-partner-sky1: #D3E9F2;
+  --color-partner-sky2: #F1F8FA;
+  --color-partner-soft: #EEF6F8;
+  --color-partner-warn: #9A6414;
+  --color-partner-warnBg: #FBF0DA;
+  --color-partner-danger: #B23F36;
+  --color-partner-dangerBg: #F9E2DF;
+  --color-partner-info: #2B6982;
+  --color-partner-infoBg: #E4EFF4;
+}
+
+/* « inline » : la classe reçoit directement var(--font-figtree)…, résolue sur
+   l'élément. Sans cela, --font-partner est calculée sur :root, où les polices
+   next/font (posées sur le layout de l'espace marque) n'existent pas encore, et
+   la police retombe sur celle par défaut. Permet aussi à la console admin de
+   rediriger ces variables vers les polices de l'app cliente. */
+@theme inline {
+  --font-partner: var(--font-figtree), system-ui, sans-serif;
+  --font-partner-heading: var(--font-dm-serif), Georgia, serif;
+}
 .font-playfair {
   font-family: var(--font-playfair), Georgia, serif;
   font-optical-sizing: auto;
@@ -74,4 +110,84 @@ input::placeholder {
 .scrollbar-white {
   scrollbar-color: rgba(255, 255, 255, 0.7) transparent;
   scrollbar-width: thin;
+}
+
+/* Espace marque (partner) form controls — kept out of the shared `input`
+   selector above so they don't collide with the consumer app's styling.
+   Dans la couche « components » : les classes utilitaires (pl-9, w-…) posées à
+   côté peuvent les compléter. Hors couche, ces règles l'emportaient sur toute
+   classe Tailwind (ex. la loupe du champ de recherche recouvrait le texte). */
+@layer components {
+  .partner-input {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--color-partner-border, #e6ecea);
+    background: var(--color-partner-bg, #fafcfd);
+    color: var(--color-partner-ink, #1f2b24);
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 16px;
+    min-height: 44px;
+  }
+  .partner-input:focus {
+    outline: none;
+    border-color: var(--color-partner-leaf, #3a9a5e);
+    box-shadow: 0 0 0 3px var(--color-partner-leafBg, #eaf6ee);
+  }
+  .partner-lbl {
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+}
+
+/* Auth (connexion / inscription) : le nuage s'arrête sur la ligne
+   séparatrice inclinée. La ligne est centrée sur l'écran (50% / 50dvh) et
+   tournée de --auth-sep-angle ; sa position x à la hauteur y vaut donc
+   50vw + (50dvh - y) * tan(angle). Le nuage fait 200% de la moitié gauche,
+   donc 50% de sa largeur = milieu de l'écran. */
+.auth-cloud {
+  --cloud-h: max(38dvh, 220px);
+  height: var(--cloud-h);
+}
+/* Au lieu d'une coupe nette, fondu en biais parallèle à la ligne.
+   Le dégradé est perpendiculaire à la ligne (90deg + angle) ; la ligne se
+   trouve à --sep-d le long du dégradé (constant pour toute la ligne).
+   --cloud-inset : recul de la fin du fondu par rapport au centre de la ligne.
+   --cloud-fade  : largeur du fondu. */
+@media (min-width: 768px) {
+  .auth-cloud {
+    --cloud-inset: 2dvh;
+    --cloud-fade: 8dvh;
+    --sep-d: calc(50% + (50dvh - var(--cloud-h) / 2) * sin(var(--auth-sep-angle)));
+    right: -100%;
+    mask-image: linear-gradient(
+      calc(90deg + var(--auth-sep-angle)),
+      black calc(var(--sep-d) - var(--cloud-inset) - var(--cloud-fade)),
+      transparent calc(var(--sep-d) - var(--cloud-inset))
+    );
+    -webkit-mask-image: linear-gradient(
+      calc(90deg + var(--auth-sep-angle)),
+      black calc(var(--sep-d) - var(--cloud-inset) - var(--cloud-fade)),
+      transparent calc(var(--sep-d) - var(--cloud-inset))
+    );
+  }
+}
+
+/* Même principe pour la colline en bas : en bas de l'écran la ligne penche
+   vers la gauche (à l'intérieur de la moitié gauche), donc pas besoin
+   d'élargir — on coupe simplement en biais. Ici 100% = milieu de l'écran,
+   et le haut de la boîte est à y = 100dvh - --hill-h. */
+.auth-hill {
+  --hill-h: max(42dvh, 240px);
+  height: var(--hill-h);
+}
+@media (min-width: 768px) {
+  .auth-hill {
+    clip-path: polygon(
+      0 0,
+      calc(100% + (var(--hill-h) - 50dvh) * tan(var(--auth-sep-angle))) 0,
+      calc(100% - 50dvh * tan(var(--auth-sep-angle))) 100%,
+      0 100%
+    );
+  }
 }

@@ -3,6 +3,7 @@ import Image from "next/image";
 import SearchBar from "@/components/search/SearchBar";
 import ProductSlider from "@/components/product/ProductSlider";
 import BrandSlider from "@/components/brand/BrandSlider";
+import { FirstName } from "@/components/account/FirstName";
 
 export const metadata: Metadata = {
   title: "Accueil — WithYou",
@@ -76,8 +77,8 @@ export default function HomePage() {
             className="mb-2 font-playfair text-center w-full"
             style={{ fontSize: "20px", color: "#4A6E4F", letterSpacing: "-0.09em" }}
           >
-            Bonjour,{" "}
-            <span className="font-semibold">Tatiana</span>
+            Bonjour{" "}
+            <FirstName className="font-semibold" />
           </p>
 
           <h1
@@ -96,7 +97,7 @@ export default function HomePage() {
         className="relative w-full bg-[#FAFFFB] pb-28"
         style={{ minHeight: "100dvh", borderRadius: "28px 28px 0 0" }}
       >
-        <ProductSlider title="Pour votre soirée" />
+        <ProductSlider title="Pour votre soirée" limit={5} />
 
         <h2
           className="font-playfair font-bold px-4 mt-8 mb-4"

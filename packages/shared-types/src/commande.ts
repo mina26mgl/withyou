@@ -51,3 +51,21 @@ export interface Commande {
   paiement?: Paiement | null;
   livraison?: Livraison | null;
 }
+
+/** Commande vue par la cliente sur /commandes (GET /commandes). */
+export interface ConsumerOrder {
+  id: string;
+  /** Numéro lisible donné à la confirmation (order.code_suivi). */
+  numero: string;
+  /** order.status : « confirmee », « en_cours », « livree »… */
+  statut: string;
+  createdAt: string | null;
+  total: number;
+  lignes: {
+    produitId: string;
+    nom: string;
+    imageUrl: string | null;
+    prixUnitaire: number;
+    quantite: number;
+  }[];
+}

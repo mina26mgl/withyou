@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>withyou – Espace marque</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#FAFCFD;--card:#FFFFFF;--ink:#1F2B24;--muted:#6B7A71;--line:#E6ECEA;
+  --heading:#173A24;--green:#173A24;--green-2:#24523A;--on-green:#FFFFFF;
+  --leaf:#3A9A5E;--leaf-bg:#EAF6EE;--sky1:#D3E9F2;--sky2:#F1F8FA;--soft:#EEF6F8;--cloud:rgba(255,255,255,.85);
+  --warn:#9A6414;--warn-bg:#FBF0DA;--danger:#B23F36;--danger-bg:#F9E2DF;--info:#2B6982;--info-bg:#E4EFF4;--star:#D4A02F;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.serif{font-family:'DM Serif Display',Georgia,'Times New Roman',serif;font-weight:400;color:var(--heading);margin:0}
+h1{font-size:clamp(28px,3.2vw,40px);line-height:1.08}
+h2{font-size:22px;line-height:1.2}
+h3{font-size:18px;line-height:1.25}
+img{max-width:100%}
+button{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+
+/* Layout */
+.app{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100%}
+.side{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:24px 14px;border-right:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;gap:20px}
+.wordmark{font-family:'DM Serif Display',Georgia,serif;font-size:30px;line-height:1;color:var(--heading);text-decoration:none;padding:0 10px}
+.wordmark small{display:block;font-family:'Figtree',system-ui,sans-serif;font-size:12.5px;color:var(--muted);margin-top:6px}
+.brandbox{display:flex;align-items:center;gap:10px;padding:10px;border-radius:16px;background:var(--bg);border:1px solid var(--line)}
+.brandbox b{display:block;font-size:14px;line-height:1.2}
+.brandbox span{font-size:12px;color:var(--leaf);font-weight:600}
+.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-family:'DM Serif Display',Georgia,serif;font-size:18px;color:#fff;background:#8E4B5A;overflow:hidden;flex:none}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:12px;color:var(--muted);text-decoration:none;font-weight:500;font-size:14.5px}
+.nav a:hover{background:var(--bg);color:var(--ink)}
+.nav a.on{background:var(--soft);color:var(--heading);font-weight:600}
+.nav svg{width:20px;height:20px;flex:none}
+.nav .count{margin-left:auto;background:var(--leaf-bg);color:var(--heading);font-size:11px;font-weight:700;border-radius:999px;padding:1px 7px}
+.side-foot{margin-top:auto;padding:14px;border-radius:16px;background:linear-gradient(180deg,var(--sky1),var(--sky2));font-size:13px;color:var(--ink)}
+.side-foot b{display:block;font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:17px;color:var(--heading);margin-bottom:4px}
+main{padding:24px clamp(16px,3vw,40px) 72px;min-width:0}
+.wrap{max-width:1200px;margin:0 auto}
+.wrap > * + *{margin-top:18px}
+
+/* Page header: the withyou sky */
+.head{position:relative;overflow:hidden;border-radius:28px;padding:36px 34px 30px;background:
+  radial-gradient(55% 90% at 88% 0%,var(--cloud),transparent 62%),
+  radial-gradient(35% 70% at 30% -10%,var(--cloud),transparent 70%),
+  linear-gradient(180deg,var(--sky1),var(--sky2));
+  display:flex;gap:20px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.head p{margin:10px 0 0;color:var(--muted);max-width:60ch}
+.head .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;background:var(--green);color:var(--on-green);padding:10px 18px;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background .15s}
+.btn:hover{background:var(--green-2)}
+.btn svg{width:16px;height:16px}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--muted)}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btn.link{background:none;color:var(--heading);padding:4px 0;border-radius:0}
+.btn.link:hover{text-decoration:underline}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+/* Surfaces */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px}
+.panel .sub{color:var(--muted);font-size:13.5px;margin:4px 0 16px;max-width:70ch}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+.g2e{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.story{padding:30px 30px 26px;border-radius:24px;background:var(--card);border:1px solid var(--line)}
+.story p{font-family:'DM Serif Display',Georgia,serif;font-size:clamp(22px,2.4vw,31px);line-height:1.28;color:var(--heading);margin:0;max-width:34ch}
+.story .meta{color:var(--muted);margin-top:12px;font-size:14px;max-width:62ch}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.kpi{padding:16px 18px;border:1px solid var(--line);border-radius:18px;background:var(--card)}
+.kpi .l{color:var(--muted);font-size:13px}
+.kpi .v{font-size:24px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi .d{font-size:12.5px;color:var(--leaf);font-weight:600}
+.big{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.chart{width:100%;height:210px;display:block}
+.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:8px}
+
+/* Pills, fit bar */
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--leaf-bg);color:var(--leaf)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.danger{background:var(--danger-bg);color:var(--danger)}
+.pill.info{background:var(--info-bg);color:var(--info)}
+.pill.mute{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.fit{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--leaf);white-space:nowrap}
+.fit i{display:block;width:60px;height:6px;border-radius:9px;background:var(--leaf-bg);overflow:hidden}
+.fit i b{display:block;height:100%;background:var(--leaf);border-radius:9px}
+.fit.none{color:var(--muted);font-weight:500}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;margin:0 -6px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:12.5px;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.prod{display:flex;align-items:center;gap:12px;min-width:250px}
+.thumb{width:48px;height:48px;border-radius:12px;overflow:hidden;flex:none;background:var(--bg)}
+.thumb svg,.thumb img{width:100%;height:100%;display:block;object-fit:cover}
+.prod b{display:block;font-weight:600;line-height:1.3}
+.prod span{color:var(--muted);font-size:12.5px}
+.muted{color:var(--muted)}
+.empty{padding:36px 12px;text-align:center;color:var(--muted)}
+
+/* Controls */
+.toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;font-size:13.5px;font-weight:500;cursor:pointer;color:var(--muted)}
+.tab:hover{color:var(--ink)}
+.tab.on{background:var(--soft);color:var(--heading);border-color:#B9D8E4;font-weight:600}
+.tab small{opacity:.75;margin-left:4px}
+.search{position:relative;min-width:240px}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted)}
+.search input{padding-left:36px !important}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field > label,.lbl{font-weight:600;font-size:13.5px}
+.hint{color:var(--muted);font-size:12.5px;line-height:1.45}
+.err{color:var(--danger);font-size:12.5px;font-weight:600}
+input[type=text],input[type=number],input[type=search],input[type=date],select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%}
+textarea{resize:vertical;min-height:100px;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--leaf);box-shadow:0 0 0 3px var(--leaf-bg)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--ink)}
+.chip:hover{border-color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--leaf-bg);border-color:var(--leaf);color:var(--heading);font-weight:600}
+.drop{position:relative;border:1.5px dashed var(--line);border-radius:16px;padding:18px;text-align:center;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--bg);font-size:13.5px}
+.drop:hover{border-color:var(--leaf);color:var(--ink)}
+.drop svg{width:22px;height:22px}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.counter{font-size:12px;color:var(--muted);text-align:right}
+
+/* Editor */
+.editor{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+.editor .panel + .panel{margin-top:16px}
+.step{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.step .n{width:28px;height:28px;border-radius:50%;background:var(--leaf-bg);color:var(--heading);font-weight:700;font-size:13px;display:grid;place-items:center;flex:none;margin-top:2px}
+.preview-col{position:sticky;top:20px}
+.preview-col .cap{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px;color:var(--muted)}
+.phone{width:330px;max-width:100%;margin:0 auto;border-radius:46px;background:#E9EEF0;border:1px solid #D6DEE2;padding:10px;box-shadow:0 30px 60px -30px rgba(40,80,95,.35)}
+.screen{border-radius:37px;overflow:hidden;height:660px;overflow-y:auto;scrollbar-width:none;position:relative}
+.screen::-webkit-scrollbar{display:none}
+.notch{position:sticky;top:0;height:0;z-index:5}
+.notch::before{content:"";position:absolute;left:50%;top:9px;transform:translateX(-50%);width:92px;height:26px;border-radius:20px;background:#1b1f1d}
+.coverbox{display:grid;grid-template-columns:1fr 120px;gap:12px}
+.coverprev{border-radius:16px;overflow:hidden;height:130px;background-size:cover;background-position:center;border:1px solid var(--line);position:relative}
+.coverprev .acts{position:absolute;right:8px;bottom:8px;display:flex;gap:6px}
+.logoprev{width:120px;height:130px;border-radius:16px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--bg);position:relative;font-size:12.5px;color:var(--muted);text-align:center;padding:8px}
+.logoprev .avatar{width:58px;height:58px;font-size:24px}
+.logoprev input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.preset{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 4px;background:var(--card);cursor:pointer;font-size:13px}
+.preset:hover{border-color:var(--muted)}
+.preset[aria-pressed="true"]{border-color:var(--leaf);background:var(--leaf-bg);font-weight:600}
+.sw{width:24px;height:24px;border-radius:50%;border:1px solid rgba(0,0,0,.08)}
+.colors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.colorf{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:6px 8px;background:var(--bg)}
+.colorf input[type=color]{width:34px;height:34px;border:0;padding:0;background:none;cursor:pointer;flex:none;border-radius:8px}
+.colorf input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.colorf input[type=color]::-webkit-color-swatch{border:1px solid rgba(0,0,0,.1);border-radius:8px}
+.colorf input[type=text]{border:0;background:transparent;padding:4px;font-variant-numeric:tabular-nums;min-width:0;box-shadow:none}
+.contrast{display:flex;gap:10px;align-items:flex-start;font-size:13px;padding:10px 12px;border-radius:12px;background:var(--leaf-bg);color:var(--heading);margin-top:14px}
+.contrast svg{width:18px;height:18px;flex:none;margin-top:1px}
+.contrast.bad{background:var(--warn-bg);color:var(--warn)}
+.founder{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
+.iconbtn{border:1px solid var(--line);background:var(--card);width:38px;height:38px;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--muted)}
+.iconbtn:hover{color:var(--danger);border-color:var(--danger)}
+.iconbtn svg{width:16px;height:16px}
+.keepnote{display:flex;gap:12px;padding:14px 16px;border-radius:16px;background:linear-gradient(180deg,var(--sky1),var(--sky2));font-size:13.5px}
+.keepnote svg{width:20px;height:20px;flex:none;color:var(--heading);margin-top:2px}
+
+/* Brand page preview (inside the phone) */
+.pv{background:var(--pb);color:var(--pt);min-height:100%;font-family:'Figtree',system-ui,sans-serif}
+.pv-cover{height:230px;background-size:cover;background-position:center;position:relative}
+.pv-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,var(--pb))}
+.pv-body{padding:0 18px 28px;margin-top:-40px;position:relative;z-index:1}
+.pv-logo{width:66px;height:66px;border-radius:50%;background:#fff;border:3px solid var(--pb);display:grid;place-items:center;overflow:hidden;font-family:'DM Serif Display',Georgia,serif;font-size:28px;color:var(--pa)}
+.pv-logo img{width:100%;height:100%;object-fit:cover}
+.pv h2{font-size:27px;color:var(--pt);margin-top:10px;line-height:1.1}
+.pv h3{font-size:18px;color:var(--pa);margin:24px 0 8px}
+.pv.sans h2,.pv.sans h3{font-family:'Figtree',system-ui,sans-serif;font-weight:700;letter-spacing:-.015em}
+.pv p{font-size:13px;line-height:1.6;margin:0}
+.pv-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;margin-top:6px}
+.seal{display:inline-flex;align-items:center;gap:4px;background:#fff;color:#173A24;border-radius:999px;padding:2px 9px 2px 6px;font-weight:700;font-size:11px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.seal svg{width:12px;height:12px}
+.pv .more{color:var(--pa);font-weight:700;font-size:12.5px;margin-top:6px;display:inline-block}
+.audio{display:flex;align-items:center;gap:10px;margin-top:12px;padding:8px 10px;border-radius:999px;border:1px solid var(--pa);font-size:11.5px}
+.audio .play{width:26px;height:26px;border-radius:50%;background:var(--pa);display:grid;place-items:center;flex:none}
+.audio .play::before{content:"";border-left:8px solid var(--pb);border-top:5px solid transparent;border-bottom:5px solid transparent;margin-left:2px}
+.audio .wave{flex:1;height:14px;background:repeating-linear-gradient(90deg,var(--pa) 0 2px,transparent 2px 5px);opacity:.45;border-radius:3px}
+.faces{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none}
+.face{width:112px;flex:none;font-size:12px}
+.face .ph{height:132px;border-radius:16px;background:var(--pa);display:grid;place-items:center;font-family:'DM Serif Display',Georgia,serif;font-size:34px;color:var(--pb);margin-bottom:6px}
+.face b{display:block;line-height:1.25}
+.pv-chips{display:flex;flex-wrap:wrap;gap:6px}
+.pv-chips span{border:1px solid var(--pa);color:var(--pa);border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:600}
+.pv-prods{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pcard{background:#fff;color:#17261C;border-radius:16px;padding:8px;font-size:11.5px;border:1px solid rgba(0,0,0,.06);font-family:'Figtree',system-ui,sans-serif}
+.pcard .img{aspect-ratio:1;border-radius:12px;overflow:hidden;background:#F2F4F1}
+.pcard .img svg,.pcard .img img{width:100%;height:100%;display:block;object-fit:cover}
+.pcard .n{font-weight:600;margin:7px 2px 4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:30px}
+.pcard .pr{display:flex;justify-content:space-between;align-items:center;margin:0 2px 8px;gap:6px}
+.pcard .pr strong{font-size:12px}
+.pcard .fit i{width:34px}
+.pcard .fit{color:#3A9A5E;font-size:11px}
+.pcard .fit i{background:#E2F2E7}.pcard .fit i b{background:#3A9A5E}
+.pcard .keep{display:block;text-align:center;background:#173A24;color:#fff;border-radius:999px;padding:7px;font-weight:600;font-size:11px}
+.pcard.lg{font-size:13px;padding:10px}
+.pcard.lg .n{font-size:13.5px;min-height:36px}
+.pcard.lg .pr strong{font-size:14px}
+
+/* Home */
+.todo{list-style:none;margin:0;padding:0}
+.todo li{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.todo li:last-child{border-bottom:0}
+.todo .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--bg);flex:none;color:var(--heading)}
+.todo .ic svg{width:18px;height:18px}
+.todo .t{flex:1;min-width:0}
+.todo .t b{display:block;font-size:14px;line-height:1.3}
+.todo .t span{font-size:12.5px;color:var(--muted)}
+
+/* Analytics */
+.bars .b{display:grid;grid-template-columns:120px 1fr 48px;align-items:center;gap:10px;font-size:13.5px;margin-bottom:11px}
+.track{height:10px;border-radius:9px;background:var(--bg);overflow:hidden;border:1px solid var(--line)}
+.track b{display:block;height:100%;background:var(--leaf);border-radius:9px}
+.funnel .f{margin-bottom:12px}
+.funnel .f .top{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:5px}
+.funnel .f .top b{font-variant-numeric:tabular-nums}
+.funnel .f .bar{height:30px;border-radius:10px;background:var(--leaf-bg);position:relative;overflow:hidden}
+.funnel .f .bar b{position:absolute;inset:0 auto 0 0;background:var(--leaf);border-radius:10px;opacity:.85}
+.funnel .drop-rate{font-size:12px;color:var(--muted);margin:-4px 0 10px 2px}
+.queries{list-style:none;margin:0;padding:0}
+.queries li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.queries li:last-child{border-bottom:0}
+.insight{display:flex;gap:14px;padding:18px;border-radius:18px;background:linear-gradient(180deg,var(--sky1),var(--sky2))}
+.insight svg{width:22px;height:22px;flex:none;color:var(--heading);margin-top:2px}
+.insight p{margin:0 0 10px;font-size:14px}
+
+/* Reviews */
+.rating{display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+.rating .score{font-family:'DM Serif Display',Georgia,serif;font-size:56px;line-height:1;color:var(--heading)}
+.stars{color:var(--star);letter-spacing:1px;font-size:14px}
+.stars .off{color:var(--line)}
+.review{padding:18px 0;border-bottom:1px solid var(--line)}
+.review:last-child{border-bottom:0}
+.review .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.review .who{display:flex;gap:10px;align-items:center}
+.review .who .avatar{width:34px;height:34px;font-size:15px;background:var(--leaf)}
+.review .who b{display:block;font-size:14px;line-height:1.2}
+.review .who span{font-size:12px;color:var(--muted)}
+.review p{margin:10px 0 0}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tags span{font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--muted)}
+.reply{margin-top:12px;padding:12px 14px;border-left:3px solid var(--leaf);background:var(--bg);border-radius:0 12px 12px 0;font-size:14px}
+.reply b{display:block;font-size:12.5px;color:var(--heading);margin-bottom:2px}
+
+/* Promote / salons */
+.slot{border:1px solid var(--line);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:10px;background:var(--card)}
+.slot h3{font-size:19px}
+.slot p{margin:0;color:var(--muted);font-size:14px}
+.slot .price{font-weight:700;font-size:15px}
+.slot .reach{font-size:13px;color:var(--muted)}
+.slot .btn{align-self:flex-start;margin-top:auto}
+.test{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:start}
+.quote{font-family:'DM Serif Display',Georgia,serif;font-size:19px;line-height:1.35;color:var(--heading);margin:12px 0 0;max-width:46ch}
+.facts{display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--muted)}
+.facts b{display:block;font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* Drawer + toast */
+.overlay{position:fixed;inset:0;background:rgba(10,22,15,.38);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.overlay.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(800px,100%);background:var(--card);z-index:41;transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);border-left:1px solid var(--line)}
+.drawer.open{transform:none}
+.dhead{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.dhead p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.dbody{padding:22px 24px;overflow-y:auto;flex:1}
+.dfoot{padding:14px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap}
+.dfoot .err{margin-right:auto}
+.dgrid{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:26px;align-items:start}
+.dgrid .aside{position:sticky;top:0}
+.sec-t{font-weight:700;font-size:14.5px;margin:4px 0 12px;color:var(--heading);display:flex;gap:10px;align-items:center}
+.sec-t .n{width:24px;height:24px;border-radius:50%;background:var(--leaf-bg);display:grid;place-items:center;font-size:12px}
+.sec + .sec{margin-top:10px;padding-top:18px;border-top:1px solid var(--line)}
+.x{border:0;background:var(--bg);width:38px;height:38px;border-radius:50%;cursor:pointer;display:grid;place-items:center;flex:none}
+.x svg{width:18px;height:18px}
+.photos{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.photos .phx{aspect-ratio:1;border-radius:12px;overflow:hidden;position:relative;background:var(--bg);border:1px solid var(--line)}
+.photos .phx img{width:100%;height:100%;object-fit:cover;display:block}
+.photos .phx .main{position:absolute;left:4px;bottom:4px;background:#fff;color:#173A24;font-size:10px;padding:1px 7px;border-radius:999px;font-weight:700}
+.photos .phx button{position:absolute;right:4px;top:4px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;cursor:pointer;display:grid;place-items:center;padding:0}
+.photos .phx button svg{width:12px;height:12px}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);opacity:0;pointer-events:none;background:#fff;color:var(--heading);border:1px solid var(--line);box-shadow:0 12px 30px -12px rgba(30,60,70,.25);padding:12px 20px;border-radius:999px;font-weight:600;font-size:14px;transition:.25s;z-index:60;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:1180px){
+  .editor{grid-template-columns:1fr}
+  .preview-col{position:static}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g2{grid-template-columns:1fr}
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:sticky;top:env(safe-area-inset-top,0px);height:auto;z-index:20;flex-direction:row;align-items:center;padding:10px 12px;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);gap:12px}
+  .brandbox,.side-foot,.wordmark small{display:none}
+  .wordmark{font-size:24px;padding:0 4px}
+  .nav{flex-direction:row}
+  .nav a{white-space:nowrap;padding:8px 12px}
+  .head{padding:26px 20px 22px;border-radius:22px}
+  main{padding:16px 14px 64px}
+  .row2,.row3,.colors,.g2e{grid-template-columns:1fr}
+  .dgrid{grid-template-columns:1fr}
+  .dgrid .aside{position:static;max-width:240px}
+  .coverbox{grid-template-columns:1fr 100px}
+  .logoprev{width:100px}
+}
+@media (max-width:560px){
+  .g4,.kpis{grid-template-columns:1fr 1fr}
+  .kpi .v{font-size:20px}
+  .bars .b{grid-template-columns:90px 1fr 42px}
+  .test{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none !important;animation:none !important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" aria-label="Navigation">
+    <a class="wordmark" href="#/accueil">withyou<small>Espace marque</small></a>
+    <div class="brandbox"><div class="avatar" id="sideLogo">A</div><div><b id="sideName">Azul Cosmétique</b><span>Vérifiée par withyou</span></div></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot"><b>Besoin d'aide ?</b>Votre chargée de compte, Rania, répond sous 24 h sur WhatsApp.</div>
+  </aside>
+  <main id="main" tabindex="-1"></main>
+</div>
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle"></aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var main=$('#main');
+function fmt(n){return Math.round(n).toLocaleString('fr-FR')}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+/* ---------- Icons ---------- */
+var I={
+ home:'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
+ page:'M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.9-.7-1.3-.7-2.2 0-.9.7-1.6 1.6-1.6H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z M7.5 11.5h.01 M10 7.5h.01 M14.5 7.5h.01',
+ box:'M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z M3 7.5l9 4.5 9-4.5 M12 12v9',
+ bag:'M5 8h14l-1 12H6z M9 8V6a3 3 0 0 1 6 0v2',
+ chart:'M4 19h16 M7 15v-4 M12 15V6 M17 15V9',
+ star:'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z',
+ spark:'M12 3v4 M12 17v4 M3 12h4 M17 12h4 M6 6l2.5 2.5 M15.5 15.5 18 18 M6 18l2.5-2.5 M15.5 8.5 18 6',
+ flask:'M9 3h6 M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3 M7.5 14h9',
+ chev:'M9 6l6 6-6 6',
+ plus:'M12 5v14 M5 12h14',
+ eye:'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
+ x:'M6 6l12 12 M18 6 6 18',
+ upload:'M12 16V4 M7 9l5-5 5 5 M4 20h16',
+ check:'M5 12.5l4.5 4.5L19 7',
+ alert:'M12 8v5 M12 16.5h.01 M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+ truck:'M3 6h11v10H3z M14 10h4l3 3v3h-7 M7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z M17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+ msg:'M4 5h16v11H8l-4 4z',
+ search:'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z M20 20l-4-4',
+ bulb:'M9 18h6 M10 21h4 M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z',
+ shield:'M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z M8.5 12l2.5 2.5 4.5-5',
+ trash:'M4 7h16 M9 7V4h6v3 M6 7l1 13h10l1-13'
+};
+function ic(n){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+I[n]+'"/></svg>'}
+
+/* ---------- Product visuals ---------- */
+function bottle(p){
+  var c=p.color||'#B98B6E',t=p.tint||'#F3EAE2',s='';
+  switch(p.shape){
+    case 'dropper': s='<rect x="29" y="36" width="22" height="32" rx="6" fill="'+c+'"/><rect x="34" y="27" width="12" height="10" rx="2" fill="#2E2A26"/><ellipse cx="40" cy="20" rx="5" ry="8" fill="#2E2A26"/><rect x="32" y="46" width="16" height="10" rx="2" fill="#fff" opacity=".75"/>';break;
+    case 'pump': s='<rect x="26" y="30" width="28" height="40" rx="8" fill="'+c+'"/><rect x="36" y="17" width="8" height="14" rx="2" fill="#2E2A26"/><rect x="42" y="17" width="12" height="4" rx="2" fill="#2E2A26"/><rect x="31" y="44" width="18" height="12" rx="2" fill="#fff" opacity=".75"/>';break;
+    case 'bar': s='<rect x="15" y="34" width="50" height="26" rx="12" fill="'+c+'"/><rect x="22" y="40" width="36" height="4" rx="2" fill="#fff" opacity=".25"/>';break;
+    default: s='<rect x="19" y="42" width="42" height="26" rx="7" fill="'+c+'"/><rect x="17" y="33" width="46" height="11" rx="4" fill="#2E2A26"/><rect x="26" y="50" width="28" height="9" rx="2" fill="#fff" opacity=".75"/>';
+  }
+  return '<svg viewBox="0 0 80 80" aria-hidden="true"><rect width="80" height="80" fill="'+t+'"/>'+s+'</svg>';
+}
+function visual(p){return (p.images&&p.images.length)?'<img src="'+p.images[0]+'" alt="">':bottle(p)}
+function fitHTML(v){return (v==null)?'<span class="fit none">Calcul après validation</span>':'<span class="fit"><i><b style="width:'+v+'%"></b></i>'+v+' %</span>'}
+
+/* ---------- State ---------- */
+var PRESETS=[
+ {n:'Rose argile',bg:'#F6EEE9',text:'#3B2B28',accent:'#8E4B5A'},
+ {n:'Olivier',bg:'#EEF0E4',text:'#26301F',accent:'#56652B'},
+ {n:"Nuit d'Atlas",bg:'#1D2330',text:'#F1EEE8',accent:'#D9B26F'},
+ {n:'Sable',bg:'#F4ECDD',text:'#3A3226',accent:'#8C6524'},
+ {n:'Menthe',bg:'#E8F3EF',text:'#1E3A33',accent:'#2A7462'}
+];
+var COMMITS=['Origine naturelle','Rituels ancestraux','Fait en Algérie','Vegan','Sans parfum ajouté','Non testé sur les animaux','Bio certifié','Emballage recyclable'];
+var CATS=['Nettoyant','Sérum','Crème et hydratant','Huile','Savon','Masque','Soin cheveux','Soin corps','Maquillage'];
+var SKINS=['Normale','Sèche','Grasse','Mixte','Sensible'];
+var NEEDS=['Hydratation','Imperfections','Rougeurs','Rides','Taches','Éclat','Pores dilatés'];
+
+function defaults(){return {
+ brand:{name:'Azul Cosmétique',since:'2022',city:'Tizi Ouzou',
+  story:"Nous partons à la recherche des rituels de beauté perdus d'Algérie. Notre but : faire perdurer ces savoirs transmis de mère en fille, et les glisser dans des soins d'aujourd'hui, formulés avec les huiles et les plantes de Kabylie.",
+  origin:"Fondée en 2022 par Saloi Djedid à Tizi Ouzou, dans un petit atelier familial. Les huiles sont pressées à froid avec des producteurs de la région.",
+  bg:'#F6EEE9',text:'#3B2B28',accent:'#8E4B5A',font:'serif',cover:null,logo:null,
+  founders:[{name:'Saloi Djedid',role:'Co-fondatrice'},{name:'Kevin Manson Benabdemeziem',role:'Co-fondateur'}],
+  commits:['Origine naturelle','Rituels ancestraux','Fait en Algérie','Vegan']},
+ pageStatus:'live',
+ products:[
+  {id:'p1',name:'Azar, rituel nettoyant et démaquillant aux huiles',cat:'Nettoyant',price:2800,size:'150 ml',stock:48,status:'online',fit:92,sales:124,shape:'pump',color:'#C98B3A',tint:'#F4E7D4',skins:['Mixte','Sèche'],needs:['Éclat'],moment:'Soir',desc:"Une huile démaquillante qui fond au contact de l'eau et emporte maquillage et impuretés sans tirailler.",inci:'Olea Europaea Fruit Oil, Prunus Amygdalus Dulcis Oil, Polyglyceryl-4 Oleate, Tocopherol',images:[]},
+  {id:'p2',name:'Thala, rituel hydratant visage',cat:'Crème et hydratant',price:2800,size:'50 ml',stock:31,status:'online',fit:92,sales:98,shape:'jar',color:'#D8C3A3',tint:'#F7F1E8',skins:['Mixte','Normale'],needs:['Hydratation'],moment:'Les deux',desc:"Une crème légère à l'eau de rose et à l'huile d'argan pour les peaux qui tiraillent en fin de journée.",inci:'',images:[]},
+  {id:'p3',name:"Sérum éclat à l'huile de rose musquée",cat:'Sérum',price:3200,size:'30 ml',stock:12,status:'online',fit:88,sales:76,shape:'dropper',color:'#C97C7C',tint:'#F8E4E2',skins:['Sèche','Normale'],needs:['Éclat','Taches'],moment:'Soir',desc:"Quelques gouttes le soir pour un teint plus uniforme et lumineux.",inci:'Rosa Canina Fruit Oil, Tocopherol',images:[]},
+  {id:'p4',name:'Crème nourrissante au karité et miel',cat:'Crème et hydratant',price:2500,size:'50 ml',stock:0,status:'online',fit:95,sales:64,shape:'jar',color:'#E0AE4E',tint:'#FBF0D9',skins:['Sèche','Sensible'],needs:['Hydratation'],moment:'Soir',desc:'Un baume riche pour les peaux sèches et sensibles.',inci:'Butyrospermum Parkii Butter, Mel, Cera Alba',images:[]},
+  {id:'p5',name:"Savon noir à l'eucalyptus",cat:'Savon',price:900,size:'200 g',stock:120,status:'online',fit:85,sales:210,shape:'bar',color:'#4A4A3F',tint:'#E6E9E1',skins:['Grasse','Mixte'],needs:['Pores dilatés','Imperfections'],moment:'Matin',desc:'Le savon noir traditionnel, adouci à l’eucalyptus, pour le hammam ou la douche.',inci:'Potassium Olivate, Eucalyptus Globulus Leaf Oil',images:[]},
+  {id:'p6',name:'Huile de figue de barbarie',cat:'Huile',price:4500,size:'30 ml',stock:20,status:'review',fit:null,sales:0,shape:'dropper',color:'#8A5A9E',tint:'#EEE6F2',skins:['Sèche','Normale'],needs:['Rides','Éclat'],moment:'Soir',desc:'Pressée à froid, riche en vitamine E.',inci:'Opuntia Ficus-Indica Seed Oil',images:[]}
+ ],
+ reviews:[
+  {who:'Asma Khe',stars:5,prod:'Azar, rituel nettoyant',skin:'Peau mixte',text:"J'ai adoré cette marque ! Les produits ont vraiment amélioré l'aspect de ma peau, je recommande vivement.",when:'il y a 3 j',reply:null},
+  {who:'Lina B.',stars:5,prod:'Sérum éclat rose musquée',skin:'Peau sèche',text:"Des soins d'une qualité exceptionnelle, on sent vraiment les rituels algériens dans chaque produit.",when:'il y a 6 j',reply:'Merci Lina, ça nous touche beaucoup. À très vite pour la suite du rituel ! Saloi'},
+  {who:'Meriem S.',stars:3,prod:'Azar, rituel nettoyant',skin:'Peau sensible',text:"Efficace pour démaquiller, mais l'odeur est un peu forte pour ma peau sensible. J'aurais aimé une version sans parfum.",when:'il y a 8 j',reply:null},
+  {who:'Kenza R.',stars:4,prod:'Savon noir eucalyptus',skin:'Peau grasse',text:'Parfait au hammam, la peau est nette. Livraison rapide à Oran.',when:'il y a 12 j',reply:null}
+ ],
+ promos:[{name:'Rituel du matin',off:15,prods:'Azar, Thala',from:'2026-09-15',to:'2026-09-30',used:23}],
+ tests:[
+  {salon:'Salon Lumière',wilaya:'Alger, Hydra',prod:'Thala, rituel hydratant',status:'done',testers:12,score:'4,6',quote:"Texture appréciée, pénètre vite. Plusieurs clientes demandent un format voyage."},
+  {salon:'Institut Tafsut',wilaya:'Tizi Ouzou',prod:"Savon noir à l'eucalyptus",status:'done',testers:20,score:'4,8',quote:"Adopté au hammam de l'institut. Les clientes le rachètent sur place."},
+  {salon:'Institut Nour',wilaya:'Oran',prod:"Sérum éclat à l'huile de rose musquée",status:'running',testers:8,score:null,quote:null}
+ ],
+ ui:{pf:'all',pq:'',of:'all',period:30,rf:'all'}
+}}
+
+var KEY='wy-partner-v2',S=defaults();
+try{var raw=localStorage.getItem(KEY);if(raw){var d=JSON.parse(raw);['products','reviews','promos','tests','pageStatus'].forEach(function(k){if(d[k]!=null)S[k]=d[k]});if(d.brand)S.brand=Object.assign(S.brand,d.brand)}}catch(e){}
+var st;
+function save(){clearTimeout(st);st=setTimeout(function(){
+  var data={brand:S.brand,products:S.products,reviews:S.reviews,promos:S.promos,tests:S.tests,pageStatus:S.pageStatus};
+  try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){
+    try{var b=Object.assign({},S.brand,{cover:null,logo:null});localStorage.setItem(KEY,JSON.stringify(Object.assign({},data,{brand:b})))}catch(e2){}
+  }},250)}
+
+/* ---------- Helpers ---------- */
+function head(t,sub,actions){return '<header class="head"><div><h1>'+t+'</h1>'+(sub?'<p>'+sub+'</p>':'')+'</div>'+(actions?'<div class="actions">'+actions+'</div>':'')+'</header>'}
+function statusOf(p){if(p.status==='online'&&p.stock===0)return 'out';return p.status}
+function statusPill(p){var s=statusOf(p);return {online:'<span class="pill ok">En ligne</span>',out:'<span class="pill danger">Rupture</span>',review:'<span class="pill info">En vérification</span>',draft:'<span class="pill mute">Brouillon</span>'}[s]}
+var gid=0;
+function series(n,base,seed){var a=[];for(var i=0;i<n;i++){a.push(Math.max(0,Math.round(base*(1+.28*Math.sin(i/2.1+seed)+.14*Math.sin(i/4.7+seed*1.7)+.006*i))))}return a}
+function areaChart(v,h){h=h||210;var w=600,max=Math.max.apply(null,v)*1.12,n=v.length;
+  function X(i){return (i/(n-1)*w).toFixed(1)}function Y(x){return (h-x/max*h).toFixed(1)}
+  var d=v.map(function(x,i){return (i?'L':'M')+X(i)+' '+Y(x)}).join(' '),id='g'+(++gid);
+  var grid=[.25,.5,.75].map(function(f){return '<line x1="0" x2="'+w+'" y1="'+(h*f)+'" y2="'+(h*f)+'" style="stroke:var(--line)" vector-effect="non-scaling-stroke"/>'}).join('');
+  return '<svg class="chart" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" role="img" aria-label="Évolution du chiffre d\'affaires"><defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--leaf);stop-opacity:.28"/><stop offset="1" style="stop-color:var(--leaf);stop-opacity:0"/></linearGradient></defs>'+grid+'<path d="'+d+' L'+w+' '+h+' L0 '+h+'Z" fill="url(#'+id+')"/><path d="'+d+'" fill="none" style="stroke:var(--leaf)" stroke-width="2.2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>'}
+function stars(n){var s='';for(var i=1;i<=5;i++)s+=i<=n?'★':'<span class="off">★</span>';return '<span class="stars" aria-label="'+n+' sur 5">'+s+'</span>'}
+function hexRgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(function(c){return c+c}).join('');var n=parseInt(h,16);return [(n>>16)&255,(n>>8)&255,n&255]}
+function lum(h){var w=[.2126,.7152,.0722];return hexRgb(h).reduce(function(a,v,i){v/=255;v=v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);return a+v*w[i]},0)}
+function ratio(a,b){var x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+function completion(){var b=S.brand;var c=[[!!b.cover,'Ajoutez une image de couverture'],[!!b.logo,'Ajoutez votre logo'],[b.story.length>=120,'Racontez votre histoire en quelques lignes'],[b.origin.length>=30,"Dites d'où vient la marque"],[b.founders.length>0,'Présentez les visages de la marque'],[b.commits.length>=3,'Choisissez au moins 3 engagements'],[S.products.filter(function(p){return p.status==='online'}).length>=3,'Mettez au moins 3 produits en ligne']];
+  var done=c.filter(function(x){return x[0]}).length;return {pct:Math.round(done/c.length*100),missing:c.filter(function(x){return !x[0]}).map(function(x){return x[1]})}}
+function ring(p){var r=15,c=2*Math.PI*r;return '<svg viewBox="0 0 38 38" width="38" height="38" aria-hidden="true"><circle cx="19" cy="19" r="'+r+'" fill="none" style="stroke:var(--line)" stroke-width="4"/><circle cx="19" cy="19" r="'+r+'" fill="none" style="stroke:var(--leaf)" stroke-width="4" stroke-linecap="round" stroke-dasharray="'+(c*p/100)+' '+c+'" transform="rotate(-90 19 19)"/></svg>'}
+function logoHTML(){return S.brand.logo?'<img src="'+S.brand.logo+'" alt="">':esc((S.brand.name||'?').charAt(0))}
+
+/* ---------- Nav ---------- */
+var NAV=[['accueil','Accueil','home'],['page','Ma page marque','page'],['produits','Produits','box'],['analyses','Ventes et analyses','chart'],['avis','Avis clientes','star'],['mise-en-avant','Mise en avant','spark'],['salons','Tests en salon','flask']];
+function renderNav(cur){
+  var un=S.reviews.filter(function(r){return !r.reply}).length;
+  $('#nav').innerHTML=NAV.map(function(n){var c=n[0]==='avis'&&un?'<span class="count">'+un+'</span>':'';
+    return '<a href="#/'+n[0]+'" class="'+(n[0]===cur?'on':'')+'"'+(n[0]===cur?' aria-current="page"':'')+'>'+ic(n[2])+'<span>'+n[1]+'</span>'+c+'</a>'}).join('');
+  $('#sideLogo').innerHTML=logoHTML();$('#sideLogo').style.background=S.brand.accent;$('#sideName').textContent=S.brand.name;
+}
+
+/* ---------- Home ---------- */
+function renderHome(){
+  var c=completion(),
+      out=S.products.filter(function(p){return statusOf(p)==='out'}),un=S.reviews.filter(function(r){return !r.reply}).length,todo=[];
+  if(out.length)todo.push(['alert',out[0].name+' est en rupture',"Il n'apparaît plus dans les routines recommandées.",'#/produits','Mettre à jour']);
+  if(un)todo.push(['msg',un+' avis sans réponse','Une réponse de la fondatrice rassure les prochaines clientes.','#/avis','Répondre']);
+  if(c.pct<100)todo.push(['ring','Votre page est complète à '+c.pct+' %',c.missing[0]+'.','#/page','Compléter']);
+  var top=S.products.slice().sort(function(a,b){return b.sales-a.sales}).slice(0,4);
+  return '<div class="wrap">'+
+  head('Bonjour Saloi.','Voici comment '+esc(S.brand.name)+' se porte depuis le 25 août.','<a class="btn ghost" href="#/page">'+ic('eye')+'Modifier ma page</a><button class="btn" data-action="new-product">'+ic('plus')+'Ajouter un produit</button>')+
+  '<section class="story"><p>Cette semaine, 42 femmes ont gardé un de vos produits, et votre page a été vue 1 284 fois.</p><div class="meta">C\'est 9 de plus que la semaine dernière. La plupart ont une peau mixte et viennent d\'Alger ou de Tizi Ouzou.</div></section>'+
+  '<div class="kpis">'+[["Chiffre d'affaires",'186 400 DZD','+12 % par rapport à août'],['Produits vendus','67','+8 ce mois-ci'],['Visites de votre page','4 912','+21 %'],['Note moyenne','4,7 / 5','38 avis']].map(function(k){return '<div class="kpi"><div class="l">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="d">'+k[2]+'</div></div>'}).join('')+'</div>'+
+  '<div class="grid g2"><section class="panel"><div class="ph"><div><h2>Chiffre d\'affaires</h2><p class="sub">30 derniers jours, en dinars</p></div><span class="big">186 400 DZD</span></div>'+areaChart(series(30,6200,1))+'<div class="axis"><span>25 août</span><span>8 sept.</span><span>23 sept.</span></div></section>'+
+  '<section class="panel"><h2>À faire</h2><p class="sub">Ce qui attend une action de votre part.</p>'+(todo.length?'<ul class="todo">'+todo.map(function(t){return '<li><span class="ic">'+(t[0]==='ring'?ring(c.pct):ic(t[0]))+'</span><span class="t"><b>'+esc(t[1])+'</b><span>'+esc(t[2])+'</span></span><a class="btn ghost sm" href="'+t[3]+'">'+t[4]+'</a></li>'}).join('')+'</ul>':'<p class="empty">Tout est à jour. Profitez-en pour proposer un test en salon.</p>')+'</section></div>'+
+  '<section class="panel"><div class="ph"><div><h2>Vos produits les plus gardés</h2><p class="sub">Classés par ventes sur 30 jours. Le score indique à quel point le produit correspond aux profils des clientes qui le voient.</p></div><a class="btn ghost sm" href="#/produits">Tous les produits</a></div><div class="tbl-wrap"><table><thead><tr><th>Produit</th><th class="num">Ventes</th><th class="num">Revenu</th><th>Adapté</th><th>Statut</th></tr></thead><tbody>'+
+  top.map(function(p){return '<tr><td><div class="prod"><div class="thumb">'+visual(p)+'</div><div><b>'+esc(p.name)+'</b><span>'+esc(p.cat)+'</span></div></div></td><td class="num">'+p.sales+'</td><td class="num">'+fmt(p.sales*p.price)+' DZD</td><td>'+fitHTML(p.fit)+'</td><td>'+statusPill(p)+'</td></tr>'}).join('')+'</tbody></table></div></section></div>';
+}
+
+/* ---------- Brand page editor ---------- */
+function pcardHTML(p,lg){return '<div class="pcard'+(lg?' lg':'')+'"><div class="img">'+visual(p)+'</div><div class="n">'+esc(p.name||'Nom du produit')+'</div><div class="pr"><strong>'+(p.price?fmt(p.price):'—')+' DZD</strong>'+(p.fit!=null?'<span class="fit"><i><b style="width:'+p.fit+'%"></b></i>'+p.fit+' %</span>':'')+'</div><span class="keep">Garder ce produit</span></div>'}
+function previewInner(){
+  var b=S.brand,prods=S.products.filter(function(p){return statusOf(p)==='online'}).slice(0,4);
+  var cover=b.cover?'background-image:url(&quot;'+b.cover+'&quot;)':'background:radial-gradient(70% 80% at 18% 25%,'+b.accent+'66,transparent 62%),radial-gradient(60% 70% at 85% 20%,#ffffffaa,transparent 60%),radial-gradient(50% 60% at 60% 85%,'+b.accent+'33,transparent 70%),linear-gradient(160deg,'+b.accent+'22,'+b.bg+')';
+  var story=b.story.length>230?esc(b.story.slice(0,230))+'…':esc(b.story);
+  return '<div class="notch"></div><div class="pv'+(b.font==='sans'?' sans':'')+'" style="--pb:'+b.bg+';--pt:'+b.text+';--pa:'+b.accent+'"><div class="pv-cover" style="'+cover+'"></div><div class="pv-body">'+
+  '<div class="pv-logo">'+logoHTML()+'</div><h2>'+esc(b.name||'Votre marque')+'</h2><div class="pv-meta"><span>Depuis '+esc(b.since)+'</span><span class="seal">'+ic('check')+'Vérifiée par withyou</span></div>'+
+  '<h3>L\'histoire qu\'ils partagent</h3><p>'+(story||'<span style="opacity:.6">Votre histoire apparaîtra ici.</span>')+'</p>'+(b.story.length>230?'<span class="more">Voir plus</span>':'')+
+  '<div class="audio"><span class="play"></span><span class="wave"></span><span>0:27</span></div>'+
+  '<h3>D\'où vient la marque</h3><p>'+esc(b.origin)+'</p>'+
+  (b.founders.length?'<h3>Les visages de '+esc(b.name)+'</h3><div class="faces">'+b.founders.map(function(f){return '<div class="face"><div class="ph">'+esc((f.name||'?').charAt(0))+'</div><b>'+esc(f.name)+'</b><span style="opacity:.75">'+esc(f.role)+'</span></div>'}).join('')+'</div>':'')+
+  (b.commits.length?'<h3>Leurs engagements</h3><div class="pv-chips">'+b.commits.map(function(c){return '<span>'+esc(c)+'</span>'}).join('')+'</div>':'')+
+  '<h3>Leurs produits</h3>'+(prods.length?'<div class="pv-prods">'+prods.map(function(p){return pcardHTML(p)}).join('')+'</div>':'<p style="opacity:.7">Aucun produit en ligne pour le moment.</p>')+
+  '</div></div>';
+}
+function contrastHTML(){var b=S.brand,r1=ratio(b.text,b.bg),r2=ratio(b.accent,b.bg),ok=r1>=4.5&&r2>=3;
+  return '<div class="contrast'+(ok?'':' bad')+'" id="contrast">'+ic(ok?'check':'alert')+'<span>'+(ok?'Lisible. Texte '+r1.toFixed(1).replace('.',',')+':1, titres '+r2.toFixed(1).replace('.',',')+':1.':'Contraste trop faible. Texte '+r1.toFixed(1).replace('.',',')+':1 (minimum 4,5), titres '+r2.toFixed(1).replace('.',',')+':1 (minimum 3). Les clientes auront du mal à lire votre histoire.')+'</span></div>'}
+function colorField(k,label){var v=S.brand[k];return '<div><div class="lbl" style="margin-bottom:6px">'+label+'</div><div class="colorf"><input type="color" value="'+v+'" data-b="'+k+'" aria-label="'+label+'"><input type="text" value="'+v.toUpperCase()+'" data-hex="'+k+'" maxlength="7" aria-label="'+label+', code hexadécimal"></div></div>'}
+function renderEditor(){
+  var b=S.brand,ps=S.pageStatus,cp=completion();
+  var status=ps==='review'?'<span class="pill info">En validation</span>':ps==='dirty'?'<span class="pill warn">Modifications non soumises</span>':'<span class="pill ok">En ligne</span>';
+  var cur=PRESETS.findIndex(function(p){return p.bg===b.bg&&p.text===b.text&&p.accent===b.accent});
+  return '<div class="wrap">'+head('Ma page marque','Ce que les clientes voient quand elles découvrent '+esc(b.name)+'. Vos changements s\'affichent à droite, puis l\'équipe withyou les valide sous 48 h.',status+'<button class="btn" data-action="submit-page">Soumettre pour validation'+ic('chev')+'</button>')+
+  '<div class="editor"><div>'+
+  '<section class="panel"><div class="step"><span class="n">1</span><div><h2>Couverture et logo</h2><p class="sub" style="margin-bottom:0">Une photo de votre atelier, de vos mains ou de vos ingrédients raconte mieux qu\'un visuel publicitaire. Format paysage, 1600 px de large conseillé.</p></div></div>'+
+  '<div class="coverbox">'+(b.cover?'<div class="coverprev" style="background-image:url(&quot;'+b.cover+'&quot;)"><div class="acts"><label class="btn ghost sm" style="position:relative;overflow:hidden">Remplacer<input type="file" accept="image/*" data-file="cover" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label><button class="btn ghost sm" data-action="rm-cover">Retirer</button></div></div>':'<label class="drop">'+ic('upload')+'<b style="color:var(--ink)">Ajouter une image de couverture</b><span>JPG, PNG ou WebP</span><input type="file" accept="image/*" data-file="cover"></label>')+
+  '<label class="logoprev"><div class="avatar" style="background:'+b.accent+'">'+logoHTML()+'</div>'+(b.logo?'Changer le logo':'Ajouter le logo')+'<input type="file" accept="image/*" data-file="logo" aria-label="Logo de la marque"></label></div></section>'+
+  '<section class="panel"><div class="step"><span class="n">2</span><div><h2>Couleurs de votre page</h2><p class="sub" style="margin-bottom:0">Partez d\'une ambiance ou choisissez vos propres couleurs. Le contraste est vérifié pour que votre texte reste lisible sur téléphone.</p></div></div>'+
+  '<div class="presets">'+PRESETS.map(function(p,i){return '<button class="preset" data-action="preset" data-i="'+i+'" aria-pressed="'+(i===cur)+'"><span class="sw" style="background:linear-gradient(135deg,'+p.bg+' 50%,'+p.accent+' 50%)"></span>'+p.n+'</button>'}).join('')+'</div>'+
+  '<div class="colors">'+colorField('bg','Fond de page')+colorField('text','Texte')+colorField('accent','Titres et détails')+'</div>'+contrastHTML()+
+  '<div class="field" style="margin:16px 0 0"><span class="lbl">Style des titres</span><div class="chips"><button class="chip" data-action="font" data-v="serif" aria-pressed="'+(b.font!=='sans')+'">Élégant</button><button class="chip" data-action="font" data-v="sans" aria-pressed="'+(b.font==='sans')+'">Moderne</button></div></div></section>'+
+  '<section class="panel"><div class="step"><span class="n">3</span><div><h2>Votre histoire</h2><p class="sub" style="margin-bottom:0">Parlez comme à une cliente dans votre atelier. Pas besoin de slogan.</p></div></div>'+
+  '<div class="row3"><div class="field"><label for="bn">Nom de la marque</label><input id="bn" type="text" value="'+esc(b.name)+'" data-b="name"></div><div class="field"><label for="bs">Depuis</label><input id="bs" type="text" value="'+esc(b.since)+'" data-b="since" inputmode="numeric" maxlength="4"></div><div class="field"><label for="bc">Ville</label><input id="bc" type="text" value="'+esc(b.city)+'" data-b="city"></div></div>'+
+  '<div class="field"><label for="bst">L\'histoire que vous partagez</label><textarea id="bst" data-b="story" maxlength="800" rows="5">'+esc(b.story)+'</textarea><div class="counter" id="cnt-story">'+b.story.length+' / 800</div></div>'+
+  '<div class="field"><label for="bo">D\'où vient la marque</label><textarea id="bo" data-b="origin" maxlength="400" rows="3">'+esc(b.origin)+'</textarea></div>'+
+  '<div class="field" style="margin-bottom:0"><span class="lbl">Message audio de la fondatrice</span><label class="drop" style="flex-direction:row;justify-content:center">'+ic('upload')+'<span>Ajouter un message de 30 s maximum (MP3, M4A)</span><input type="file" accept="audio/*" data-file="audio"></label></div></section>'+
+  '<section class="panel"><div class="step"><span class="n">4</span><div><h2>Les visages de la marque</h2><p class="sub" style="margin-bottom:0">Les clientes font confiance à des personnes. Ajoutez les fondatrices, les artisanes, l\'équipe.</p></div></div><div id="founders">'+foundersHTML()+'</div><button class="btn ghost sm" data-action="add-founder">'+ic('plus')+'Ajouter une personne</button></section>'+
+  '<section class="panel"><div class="step"><span class="n">5</span><div><h2>Vos engagements</h2><p class="sub" style="margin-bottom:0">Choisissez ceux que vous pouvez prouver. L\'équipe withyou vérifie chaque engagement avant publication.</p></div></div><div class="chips">'+COMMITS.map(function(c){return '<button class="chip" data-action="commit" data-v="'+esc(c)+'" aria-pressed="'+(b.commits.indexOf(c)>-1)+'">'+esc(c)+'</button>'}).join('')+'</div></section>'+
+  '<div class="keepnote" style="margin-top:16px">'+ic('shield')+'<div>Le cachet « Vérifiée par withyou », les fiches produits et le score d\'adaptation gardent le style withyou. Les clientes s\'y retrouvent ainsi d\'une marque à l\'autre, et votre page gagne en crédibilité.</div></div>'+
+  '</div><div class="preview-col"><div class="cap"><span>Aperçu sur téléphone</span><span>Page complète à '+cp.pct+' %</span></div><div class="phone"><div class="screen" id="pv">'+previewInner()+'</div></div></div></div></div>';
+}
+function foundersHTML(){return S.brand.founders.map(function(f,i){return '<div class="founder"><input type="text" value="'+esc(f.name)+'" data-f="'+i+':name" aria-label="Nom" placeholder="Nom et prénom"><input type="text" value="'+esc(f.role)+'" data-f="'+i+':role" aria-label="Rôle" placeholder="Rôle"><button class="iconbtn" data-action="del-founder" data-i="'+i+'" aria-label="Retirer '+esc(f.name)+'">'+ic('trash')+'</button></div>'}).join('')}
+function updatePreview(){var pv=$('#pv');if(pv){var sc=pv.scrollTop;pv.innerHTML=previewInner();pv.scrollTop=sc}var c=$('#contrast');if(c)c.outerHTML=contrastHTML();markDirty()}
+function markDirty(){if(S.pageStatus!=='dirty'){S.pageStatus='dirty';var h=document.querySelector('.head .actions .pill');if(h)h.outerHTML='<span class="pill warn">Modifications non soumises</span>'}save()}
+
+/* ---------- Products ---------- */
+function productRows(){
+  var q=S.ui.pq.toLowerCase(),f=S.ui.pf;
+  var list=S.products.filter(function(p){return (f==='all'||statusOf(p)===f)&&(!q||p.name.toLowerCase().indexOf(q)>-1||p.cat.toLowerCase().indexOf(q)>-1)});
+  if(!list.length)return '<tr><td colspan="7" class="empty">Aucun produit ne correspond. Essayez un autre filtre ou ajoutez un produit.</td></tr>';
+  return list.map(function(p){return '<tr><td><div class="prod"><div class="thumb">'+visual(p)+'</div><div><b>'+esc(p.name)+'</b><span>'+esc(p.cat)+(p.size?', '+esc(p.size):'')+'</span></div></div></td><td class="num">'+fmt(p.price)+' DZD</td><td class="num"'+(p.stock===0?' style="color:var(--danger);font-weight:600"':'')+'>'+p.stock+'</td><td class="num">'+p.sales+'</td><td>'+fitHTML(p.fit)+'</td><td>'+statusPill(p)+'</td><td class="num"><button class="btn ghost sm" data-action="edit-product" data-id="'+p.id+'">Modifier</button></td></tr>'}).join('');
+}
+function renderProducts(){
+  var cnt=function(s){return S.products.filter(function(p){return s==='all'||statusOf(p)===s}).length};
+  var F=[['all','Tous'],['online','En ligne'],['review','En vérification'],['out','Rupture'],['draft','Brouillons']];
+  return '<div class="wrap">'+head('Produits','Chaque produit est vérifié par l\'équipe withyou avant sa mise en ligne, en général sous 48 h. withyou s\'occupe ensuite des commandes, du paiement et de la livraison dans les 58 wilayas. Plus la fiche est complète, mieux l\'IA le recommande aux bonnes peaux.','<button class="btn" data-action="new-product">'+ic('plus')+'Ajouter un produit</button>')+
+  '<section class="panel"><div class="toolbar"><div class="tabs" role="tablist">'+F.map(function(x){return '<button class="tab'+(S.ui.pf===x[0]?' on':'')+'" data-action="pf" data-v="'+x[0]+'" role="tab" aria-selected="'+(S.ui.pf===x[0])+'">'+x[1]+'<small>'+cnt(x[0])+'</small></button>'}).join('')+'</div><div class="search">'+ic('search')+'<input type="search" placeholder="Rechercher un produit" value="'+esc(S.ui.pq)+'" id="pq" aria-label="Rechercher un produit"></div></div>'+
+  '<div class="tbl-wrap"><table><thead><tr><th>Produit</th><th class="num">Prix</th><th class="num">Stock</th><th class="num">Ventes 30 j</th><th>Adapté</th><th>Statut</th><th></th></tr></thead><tbody id="ptable">'+productRows()+'</tbody></table></div></section></div>';
+}
+var D=null;
+function openProduct(id){
+  var p=id?S.products.find(function(x){return x.id===id}):null;
+  D=p?JSON.parse(JSON.stringify(p)):{id:null,name:'',cat:'Crème et hydratant',price:'',size:'',stock:'',desc:'',skins:[],needs:[],moment:'Les deux',inci:'',images:[],shape:'jar',color:'#B98B6E',tint:'#F3EAE2',status:'draft',fit:null,sales:0};
+  var chipset=function(key,arr){return '<div class="chips">'+arr.map(function(v){return '<button class="chip" data-action="p-toggle" data-k="'+key+'" data-v="'+esc(v)+'" aria-pressed="'+(D[key].indexOf(v)>-1)+'">'+esc(v)+'</button>'}).join('')+'</div>'};
+  var body='<div class="dgrid"><div>'+
+   '<div class="sec"><div class="sec-t"><span class="n">1</span>Photos</div><label class="drop">'+ic('upload')+'<b style="color:var(--ink)">Ajoutez jusqu\'à 5 photos</b><span>La première sert de photo principale. Fond clair, produit bien centré.</span><input type="file" accept="image/*" multiple data-file="pimg"></label><div class="photos" id="photos"></div></div>'+
+   '<div class="sec"><div class="sec-t"><span class="n">2</span>Informations</div>'+
+    '<div class="field"><label for="pn">Nom du produit</label><input id="pn" type="text" data-p="name" value="'+esc(D.name)+'" placeholder="Ex. Thala, rituel hydratant visage"></div>'+
+    '<div class="row2"><div class="field"><label for="pc">Catégorie</label><select id="pc" data-p="cat">'+CATS.map(function(c){return '<option'+(c===D.cat?' selected':'')+'>'+c+'</option>'}).join('')+'</select></div><div class="field"><label for="psz">Contenance</label><input id="psz" type="text" data-p="size" value="'+esc(D.size)+'" placeholder="Ex. 50 ml"></div></div>'+
+    '<div class="row2"><div class="field"><label for="pp">Prix de vente (DZD)</label><input id="pp" type="number" min="0" step="50" data-p="price" value="'+esc(D.price)+'" inputmode="numeric"><span class="hint">Commission withyou de 15 % déduite au paiement.</span></div><div class="field"><label for="pst">Stock disponible</label><input id="pst" type="number" min="0" data-p="stock" value="'+esc(D.stock)+'" inputmode="numeric"></div></div>'+
+    '<div class="field"><label for="pd">Description</label><textarea id="pd" data-p="desc" rows="4" maxlength="600" placeholder="Ce que fait le produit, sa texture, comment l\'utiliser.">'+esc(D.desc)+'</textarea></div></div>'+
+   '<div class="sec"><div class="sec-t"><span class="n">3</span>Pour qui</div><p class="hint" style="margin:-4px 0 12px">Ces réponses servent à calculer le score d\'adaptation et à placer votre produit dans les bonnes routines.</p>'+
+    '<div class="field"><span class="lbl">Types de peau</span>'+chipset('skins',SKINS)+'</div><div class="field"><span class="lbl">Besoins</span>'+chipset('needs',NEEDS)+'</div>'+
+    '<div class="field"><span class="lbl">Moment de la routine</span><div class="chips">'+['Matin','Soir','Les deux'].map(function(m){return '<button class="chip" data-action="p-moment" data-v="'+m+'" aria-pressed="'+(D.moment===m)+'">'+m+'</button>'}).join('')+'</div></div></div>'+
+   '<div class="sec"><div class="sec-t"><span class="n">4</span>Ingrédients</div><div class="field"><label for="pi">Liste INCI</label><textarea id="pi" data-p="inci" rows="3" placeholder="Copiez la liste telle qu\'elle figure sur l\'emballage.">'+esc(D.inci)+'</textarea><span class="hint">Obligatoire pour la vérification. L\'IA l\'utilise pour signaler les ingrédients à éviter selon le profil de chaque cliente.</span></div></div>'+
+  '</div><div class="aside"><div class="lbl" style="margin-bottom:8px">Aperçu dans l\'app</div><div id="dcard">'+pcardHTML(D,true)+'</div><p class="hint" style="margin-top:10px">Le score d\'adaptation est calculé pour chaque cliente après la validation.</p></div></div>';
+  var foot='<span class="err" id="perr"></span>'+(id?'':'<button class="btn ghost" data-action="p-save" data-mode="draft">Enregistrer le brouillon</button>')+'<button class="btn" data-action="p-save" data-mode="review">'+(id&&D.status==='online'?'Enregistrer les modifications':'Envoyer en vérification')+'</button>';
+  openDrawer(id?'Modifier le produit':'Ajouter un produit',id?esc(D.name):'Il sera visible après validation par l\'équipe withyou.',body,foot);
+  renderPhotos();
+}
+function renderPhotos(){var el=$('#photos');if(!el)return;el.innerHTML=D.images.map(function(u,i){return '<div class="phx"><img src="'+u+'" alt="Photo '+(i+1)+'">'+(i===0?'<span class="main">Principale</span>':'')+'<button data-action="p-rmimg" data-i="'+i+'" aria-label="Retirer la photo '+(i+1)+'">'+ic('x')+'</button></div>'}).join('')}
+function updateCard(){var el=$('#dcard');if(el)el.innerHTML=pcardHTML(D,true)}
+function saveProduct(mode){
+  var err=$('#perr');
+  if(!String(D.name).trim()){err.textContent='Ajoutez le nom du produit.';$('#pn').focus();return}
+  if(!(+D.price>0)){err.textContent='Indiquez un prix supérieur à 0 DZD.';$('#pp').focus();return}
+  if(mode==='review'&&!String(D.inci).trim()){err.textContent='Ajoutez la liste INCI pour envoyer en vérification.';$('#pi').focus();return}
+  D.price=+D.price;D.stock=+D.stock||0;
+  var wasOnline=D.status==='online';
+  if(mode==='draft')D.status='draft';else if(!wasOnline)D.status='review';
+  if(!D.id){D.id='p'+Date.now();S.products.unshift(D)}else{var i=S.products.findIndex(function(x){return x.id===D.id});S.products[i]=D}
+  save();closeDrawer();
+  toast(mode==='draft'?'Brouillon enregistré.':wasOnline?'Modifications enregistrées.':'Produit envoyé en vérification. Réponse sous 48 h.');
+  render();
+}
+
+/* ---------- Analytics ---------- */
+function renderAnalytics(){
+  var per=S.ui.period,f={7:.24,30:1,90:2.9}[per],vals=series(per===90?90:per,6200,2);
+  var views=4912*f,opened=2140*f,kept=402*f,orders=67*f;
+  var labels={7:['17 sept.','20 sept.','23 sept.'],30:['25 août','8 sept.','23 sept.'],90:['26 juin','9 août','23 sept.']}[per];
+  var step=function(l,v,max){return '<div class="f"><div class="top"><span>'+l+'</span><b>'+fmt(v)+'</b></div><div class="bar"><b style="width:'+(v/max*100).toFixed(1)+'%"></b></div></div>'};
+  var rate=function(a,b){return '<div class="drop-rate">'+(b/a*100).toFixed(1).replace('.',',')+' % passent à l\'étape suivante</div>'};
+  var bars=function(rows){return '<div class="bars">'+rows.map(function(r){return '<div class="b"><span>'+r[0]+'</span><span class="track"><b style="width:'+r[1]+'%"></b></span><span class="num">'+r[1]+' %</span></div>'}).join('')+'</div>'};
+  return '<div class="wrap">'+head('Ventes et analyses','Comprenez qui achète vos produits, ce qu\'elles cherchent, et pourquoi certaines repartent sans acheter.','<div class="tabs">'+[7,30,90].map(function(p){return '<button class="tab'+(per===p?' on':'')+'" data-action="period" data-v="'+p+'">'+p+' jours</button>'}).join('')+'</div>')+
+  '<div class="kpis">'+[["Chiffre d'affaires",fmt(186400*f)+' DZD'],['Produits vendus',fmt(orders)],['Panier moyen','2 780 DZD'],['Taux de conversion','3,1 %']].map(function(k){return '<div class="kpi"><div class="l">'+k[0]+'</div><div class="v">'+k[1]+'</div></div>'}).join('')+'</div>'+
+  '<section class="panel"><div class="ph"><div><h2>Chiffre d\'affaires</h2><p class="sub">Sur les '+per+' derniers jours, en dinars.</p></div></div>'+areaChart(vals,230)+'<div class="axis"><span>'+labels[0]+'</span><span>'+labels[1]+'</span><span>'+labels[2]+'</span></div></section>'+
+  '<div class="grid g2e"><section class="panel"><h2>Le parcours des clientes</h2><p class="sub">De la découverte de votre page jusqu\'à l\'achat.</p><div class="funnel">'+step('Visites de votre page',views,views)+rate(views,opened)+step('Fiches produits ouvertes',opened,views)+rate(opened,kept)+step('Produits gardés',kept,views)+rate(kept,orders)+step('Achats',orders,views)+'</div></section>'+
+  '<section class="panel"><h2>Qui achète vos produits</h2><p class="sub">Types de peau déclarés lors de l\'onboarding ou du scan.</p>'+bars([['Mixte',38],['Sèche',24],['Grasse',21],['Sensible',17]])+'<h3 style="margin:20px 0 12px">Wilayas</h3>'+bars([['Alger',41],['Tizi Ouzou',19],['Oran',14],['Béjaïa',9],['Autres',17]])+'</section></div>'+
+  '<div class="grid g2e"><section class="panel"><h2>Ce qu\'elles cherchaient</h2><p class="sub">Recherches qui ont mené à vos produits.</p><ul class="queries">'+[['démaquillant naturel',312],['huile de figue de barbarie',268],['crème peau sèche bio',190],['savon noir',174],['sérum taches',96]].map(function(q){return '<li><span>« '+q[0]+' »</span><b class="num">'+fmt(q[1]*f)+'</b></li>'}).join('')+'</ul></section>'+
+  '<section class="panel"><h2>À retenir</h2><p class="sub">Des pistes tirées de vos données, mises à jour chaque lundi.</p>'+
+  '<div class="insight">'+ic('bulb')+'<div><p>Les clientes à peau sensible ouvrent souvent la fiche de Thala mais l\'achètent peu : 1,2 % contre 4,1 % en moyenne. Sa liste d\'ingrédients est vide, donc l\'IA ne peut pas rassurer ces profils.</p><button class="btn sm" data-action="edit-product" data-id="p2">Compléter la fiche</button></div></div>'+
+  '<div class="insight" style="margin-top:12px">'+ic('bulb')+'<div><p>« huile de figue de barbarie » est la 2e recherche qui mène à vous. Votre huile est encore en vérification : elle apparaîtra dans ces résultats dès sa validation.</p></div></div></section></div></div>';
+}
+
+/* ---------- Reviews ---------- */
+function renderReviews(){
+  var R=S.reviews,f=S.ui.rf,list=R.map(function(r,i){return [r,i]}).filter(function(x){return f==='all'||(f==='open'&&!x[0].reply)||(f==='low'&&x[0].stars<=3)});
+  var dist=[5,4,3,2,1].map(function(s){return [s,{5:71,4:18,3:8,2:2,1:1}[s]]});
+  return '<div class="wrap">'+head('Avis clientes','Chaque avis vient d\'un achat vérifié. Une réponse sincère de la fondatrice compte autant que la note.','')+
+  '<div class="grid g2" style="grid-template-columns:minmax(0,1fr) minmax(0,2fr)"><section class="panel"><div class="rating"><div><div class="score">4,7</div>'+stars(5)+'<div class="muted" style="font-size:13px;margin-top:4px">38 avis vérifiés</div></div></div><div class="bars" style="margin-top:18px">'+dist.map(function(d){return '<div class="b" style="grid-template-columns:52px 1fr 40px"><span>'+d[0]+' ★</span><span class="track"><b style="width:'+d[1]+'%;background:var(--star)"></b></span><span class="num">'+d[1]+' %</span></div>'}).join('')+'</div></section>'+
+  '<section class="panel"><div class="toolbar"><div class="tabs">'+[['all','Tous'],['open','Sans réponse'],['low','3 étoiles et moins']].map(function(x){return '<button class="tab'+(f===x[0]?' on':'')+'" data-action="rf" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div></div>'+
+  (list.length?list.map(function(x){var r=x[0],i=x[1];return '<article class="review"><div class="top"><div class="who"><div class="avatar">'+esc(r.who.charAt(0))+'</div><div><b>'+esc(r.who)+'</b><span>'+r.when+'</span></div></div>'+stars(r.stars)+'</div><p>'+esc(r.text)+'</p><div class="tags"><span>'+esc(r.prod)+'</span><span>'+esc(r.skin)+'</span><span>Achat vérifié</span></div>'+
+   (r.reply?'<div class="reply"><b>Votre réponse</b>'+esc(r.reply)+'</div>':'<div id="rbox'+i+'" style="margin-top:12px"><button class="btn ghost sm" data-action="reply-open" data-i="'+i+'">'+ic('msg')+'Répondre</button></div>')+'</article>'}).join(''):'<p class="empty">Aucun avis dans cette catégorie.</p>')+
+  '</section></div></div>';
+}
+
+/* ---------- Promote ---------- */
+function renderPromote(){
+  var slots=[
+   ['Dans les routines recommandées',"Votre produit est proposé en priorité dans les routines générées, uniquement pour les profils à qui il convient à 80 % ou plus.",'4 000 DZD par semaine','Portée estimée : 2 000 à 3 500 profils','Réserver','routine'],
+   ['Marques à découvrir',"Votre histoire en carte « Raconté par withyou » sur l'accueil de l'app.",'6 000 DZD par semaine','Portée estimée : 8 000 à 12 000 visites','Réserver','home'],
+   ['Box Rituel du mois',"Proposez un produit pour la box d'octobre. L'équipe withyou sélectionne selon les profils des abonnées.",'Sans frais','Candidatures jusqu\'au 5 octobre','Proposer un produit','box'],
+   ['Campagne avec une créatrice',"Une créatrice formée par withyou teste vos produits et raconte son expérience, sans script publicitaire.",'Sur devis','10 créatrices disponibles','Demander un devis','influence']
+  ];
+  return '<div class="wrap">'+head('Mise en avant','Faites découvrir vos produits aux bonnes clientes. Un placement ne contourne jamais le score d\'adaptation : un produit n\'est montré qu\'aux peaux à qui il convient.','<button class="btn" data-action="promo-new">'+ic('plus')+'Créer une promotion</button>')+
+  '<section class="panel"><h2>Vos promotions</h2><p class="sub">Les réductions s\'affichent sur la fiche produit et dans les routines.</p><div class="tbl-wrap"><table><thead><tr><th>Promotion</th><th>Produits</th><th class="num">Réduction</th><th>Période</th><th class="num">Utilisations</th><th>Statut</th></tr></thead><tbody>'+
+  (S.promos.length?S.promos.map(function(p){var live=new Date(p.from)<=new Date('2026-09-23')&&new Date(p.to)>=new Date('2026-09-23');return '<tr><td><b>'+esc(p.name)+'</b></td><td>'+esc(p.prods)+'</td><td class="num">-'+p.off+' %</td><td>'+new Date(p.from).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' au '+new Date(p.to).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'</td><td class="num">'+p.used+'</td><td>'+(live?'<span class="pill ok">Active</span>':'<span class="pill mute">Programmée</span>')+'</td></tr>'}).join(''):'<tr><td colspan="6" class="empty">Aucune promotion pour le moment.</td></tr>')+
+  '</tbody></table></div></section>'+
+  '<div class="grid g4">'+slots.map(function(s){return '<div class="slot"><h3>'+s[0]+'</h3><p>'+s[1]+'</p><div class="price">'+s[2]+'</div><div class="reach">'+s[3]+'</div><button class="btn ghost sm" data-action="book" data-v="'+s[5]+'">'+s[4]+'</button></div>'}).join('')+'</div></div>';
+}
+
+/* ---------- Salons ---------- */
+function renderSalons(){
+  var done=S.tests.filter(function(t){return t.status==='done'});
+  return '<div class="wrap">'+head('Tests en salon','Faites tester vos produits par les clientes de nos 100 salons partenaires, et récupérez leurs retours avant de lancer ou d\'ajuster un soin.','<button class="btn" data-action="test-new">'+ic('plus')+'Proposer un test</button>')+
+  '<div class="kpis" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="kpi"><div class="l">Tests réalisés</div><div class="v">'+S.tests.length+'</div></div><div class="kpi"><div class="l">Clientes testeuses</div><div class="v">'+S.tests.reduce(function(a,t){return a+t.testers},0)+'</div></div><div class="kpi"><div class="l">Satisfaction moyenne</div><div class="v">4,7 / 5</div></div></div>'+
+  S.tests.map(function(t){return '<section class="panel"><div class="test"><div><h2>'+esc(t.prod)+'</h2><div class="muted" style="margin-top:4px">'+esc(t.salon)+', '+esc(t.wilaya)+'</div>'+(t.quote?'<p class="quote">« '+esc(t.quote)+' »</p>':'<p class="muted" style="margin:12px 0 0">Les échantillons sont en salon. Les premiers retours arrivent sous 10 jours.</p>')+'<div class="facts"><div><b>'+t.testers+'</b>clientes</div>'+(t.score?'<div><b>'+t.score+' / 5</b>satisfaction</div>':'')+'</div></div>'+(t.status==='done'?'<span class="pill ok">Terminé</span>':t.status==='pending'?'<span class="pill mute">En attente d\'un salon</span>':'<span class="pill info">En cours</span>')+'</div></section>'}).join('')+'</div>';
+}
+
+/* ---------- Drawer + toast ---------- */
+var lastFocus=null;
+function openDrawer(t,sub,body,foot){lastFocus=document.activeElement;var d=$('#drawer');d.innerHTML='<div class="dhead"><div><h2 id="dtitle">'+t+'</h2>'+(sub?'<p>'+sub+'</p>':'')+'</div><button class="x" data-action="close" aria-label="Fermer">'+ic('x')+'</button></div><div class="dbody">'+body+'</div><div class="dfoot">'+foot+'</div>';d.classList.add('open');$('#overlay').classList.add('open');document.body.style.overflow='hidden';setTimeout(function(){var f=d.querySelector('input[type=text],select,textarea');if(f)f.focus()},280)}
+function closeDrawer(){$('#drawer').classList.remove('open');$('#overlay').classList.remove('open');document.body.style.overflow='';if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+var tt;function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('show')},3200)}
+
+function openPromo(){
+  var opts=S.products.filter(function(p){return statusOf(p)==='online'}).map(function(p){return '<button class="chip" data-action="pr-toggle" data-v="'+esc(p.name.split(',')[0])+'" aria-pressed="false">'+esc(p.name)+'</button>'}).join('');
+  openDrawer('Créer une promotion','Elle sera visible sur vos fiches et dans les routines pendant la période choisie.',
+   '<div class="field"><label for="prn">Nom de la promotion</label><input id="prn" type="text" placeholder="Ex. Rituel du soir"><span class="hint">Visible uniquement par vous.</span></div>'+
+   '<div class="field"><label for="pro">Réduction (%)</label><input id="pro" type="number" min="5" max="50" step="5" value="15"></div>'+
+   '<div class="row2"><div class="field"><label for="prf">Du</label><input id="prf" type="date" value="2026-10-01"></div><div class="field"><label for="prt">Au</label><input id="prt" type="date" value="2026-10-15"></div></div>'+
+   '<div class="field"><span class="lbl">Produits concernés</span><div class="chips" id="prchips">'+opts+'</div></div>',
+   '<span class="err" id="prerr"></span><button class="btn ghost" data-action="close">Annuler</button><button class="btn" data-action="promo-save">Créer la promotion</button>');
+}
+function openTest(){
+  openDrawer('Proposer un test en salon','Nous trouvons le salon partenaire qui correspond à votre produit et à votre cible.',
+   '<div class="field"><label for="tp">Produit à tester</label><select id="tp">'+S.products.filter(function(p){return p.status!=='draft'}).map(function(p){return '<option>'+esc(p.name)+'</option>'}).join('')+'</select></div>'+
+   '<div class="row2"><div class="field"><label for="tn">Échantillons à envoyer</label><input id="tn" type="number" min="5" max="50" value="15"><span class="hint">Entre 5 et 50. Les frais d\'envoi sont pris en charge par withyou.</span></div><div class="field"><label for="tw">Wilaya souhaitée</label><select id="tw"><option>Peu importe</option><option>Alger</option><option>Oran</option><option>Tizi Ouzou</option><option>Constantine</option><option>Béjaïa</option></select></div></div>'+
+   '<div class="field"><label for="tq">Ce que vous voulez savoir</label><textarea id="tq" rows="3" placeholder="Ex. La texture convient-elle aux peaux grasses en été ?"></textarea></div>',
+   '<button class="btn ghost" data-action="close">Annuler</button><button class="btn" data-action="test-save">Envoyer la demande</button>');
+}
+
+/* ---------- Router ---------- */
+var R={accueil:renderHome,page:renderEditor,produits:renderProducts,analyses:renderAnalytics,avis:renderReviews,'mise-en-avant':renderPromote,salons:renderSalons};
+function cur(){var r=location.hash.replace('#/','');return R[r]?r:'accueil'}
+function render(){var r=cur();main.innerHTML=R[r]();renderNav(r)}
+window.addEventListener('hashchange',function(){render();window.scrollTo(0,0);main.focus({preventScroll:true})});
+
+/* ---------- Events ---------- */
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-action]');if(!t)return;var a=t.dataset.action,v=t.dataset.v,b=S.brand;
+  switch(a){
+    case 'close':closeDrawer();break;
+    case 'new-product':openProduct(null);break;
+    case 'edit-product':openProduct(t.dataset.id);break;
+    case 'preset':var p=PRESETS[+t.dataset.i];b.bg=p.bg;b.text=p.text;b.accent=p.accent;markDirty();render();break;
+    case 'font':b.font=v;document.querySelectorAll('[data-action=font]').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.v===v)});updatePreview();break;
+    case 'commit':var i=b.commits.indexOf(v);if(i>-1)b.commits.splice(i,1);else b.commits.push(v);t.setAttribute('aria-pressed',i===-1);updatePreview();break;
+    case 'add-founder':b.founders.push({name:'',role:''});$('#founders').innerHTML=foundersHTML();var ins=document.querySelectorAll('#founders input[data-f]');ins[ins.length-2].focus();updatePreview();break;
+    case 'del-founder':b.founders.splice(+t.dataset.i,1);$('#founders').innerHTML=foundersHTML();updatePreview();break;
+    case 'rm-cover':b.cover=null;markDirty();render();break;
+    case 'submit-page':
+      if(ratio(b.text,b.bg)<4.5||ratio(b.accent,b.bg)<3){toast('Corrigez le contraste des couleurs avant de soumettre.');var c=$('#contrast');if(c)c.scrollIntoView({behavior:'smooth',block:'center'});break}
+      if(!b.name.trim()){toast('Ajoutez le nom de la marque avant de soumettre.');break}
+      S.pageStatus='review';save();render();toast('Page soumise. L\'équipe withyou la valide sous 48 h.');break;
+    case 'pf':S.ui.pf=v;render();break;
+    case 'rf':S.ui.rf=v;render();break;
+    case 'period':S.ui.period=+v;render();break;
+    case 'p-toggle':var arr=D[t.dataset.k],j=arr.indexOf(v);if(j>-1)arr.splice(j,1);else arr.push(v);t.setAttribute('aria-pressed',j===-1);break;
+    case 'p-moment':D.moment=v;document.querySelectorAll('[data-action=p-moment]').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.v===v)});break;
+    case 'p-rmimg':D.images.splice(+t.dataset.i,1);renderPhotos();updateCard();break;
+    case 'p-save':saveProduct(t.dataset.mode);break;
+    case 'reply-open':var i2=+t.dataset.i;$('#rbox'+i2).innerHTML='<label class="lbl" for="rt'+i2+'" style="display:block;margin-bottom:6px">Votre réponse publique</label><textarea id="rt'+i2+'" rows="3" placeholder="Merci pour votre retour…"></textarea><div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end"><button class="btn ghost sm" data-action="reply-cancel">Annuler</button><button class="btn sm" data-action="reply-send" data-i="'+i2+'">Publier la réponse</button></div>';$('#rt'+i2).focus();break;
+    case 'reply-cancel':render();break;
+    case 'reply-send':var k=+t.dataset.i,txt=$('#rt'+k).value.trim();if(!txt){$('#rt'+k).focus();toast('Écrivez votre réponse avant de la publier.');break}S.reviews[k].reply=txt;save();render();toast('Réponse publiée.');break;
+    case 'promo-new':openPromo();break;
+    case 'pr-toggle':t.setAttribute('aria-pressed',t.getAttribute('aria-pressed')!=='true');break;
+    case 'promo-save':
+      var sel=[].slice.call(document.querySelectorAll('#prchips [aria-pressed=true]')).map(function(x){return x.dataset.v});var nm=$('#prn').value.trim(),off=+$('#pro').value,fr=$('#prf').value,to=$('#prt').value;
+      if(!nm){$('#prerr').textContent='Donnez un nom à la promotion.';break}
+      if(!sel.length){$('#prerr').textContent='Choisissez au moins un produit.';break}
+      if(!(off>=5&&off<=50)){$('#prerr').textContent='La réduction doit être entre 5 et 50 %.';break}
+      if(!fr||!to||to<fr){$('#prerr').textContent='La date de fin doit suivre la date de début.';break}
+      S.promos.unshift({name:nm,off:off,prods:sel.join(', '),from:fr,to:to,used:0});save();closeDrawer();render();toast('Promotion créée.');break;
+    case 'book':toast(v==='box'?'Candidature envoyée pour la box d\'octobre.':v==='influence'?'Demande de devis envoyée. Réponse sous 72 h.':'Demande de réservation envoyée à votre chargée de compte.');break;
+    case 'test-new':openTest();break;
+    case 'test-save':S.tests.unshift({salon:'Salon à attribuer',wilaya:$('#tw').value,prod:$('#tp').value,status:'pending',testers:+$('#tn').value||15,score:null,quote:null});save();closeDrawer();render();toast('Demande envoyée. Nous vous proposons un salon sous 5 jours.');break;
+  }
+});
+document.addEventListener('input',function(e){
+  var t=e.target,b=S.brand;
+  if(t.dataset.b){b[t.dataset.b]=t.value;if(t.type==='color'){var h=document.querySelector('[data-hex='+t.dataset.b+']');if(h)h.value=t.value.toUpperCase()}if(t.dataset.b==='story'){var c=$('#cnt-story');if(c)c.textContent=t.value.length+' / 800'}updatePreview();if(t.dataset.b==='name'||t.type==='color')renderNav('page');return}
+  if(t.dataset.hex){var v=t.value.trim();if(v[0]!=='#')v='#'+v;if(/^#[0-9a-f]{6}$/i.test(v)){b[t.dataset.hex]=v.toLowerCase();var cp=document.querySelector('input[type=color][data-b='+t.dataset.hex+']');if(cp)cp.value=v.toLowerCase();updatePreview();renderNav('page')}return}
+  if(t.dataset.f){var p=t.dataset.f.split(':');b.founders[+p[0]][p[1]]=t.value;updatePreview();return}
+  if(t.dataset.p){D[t.dataset.p]=t.value;updateCard();var er=$('#perr');if(er)er.textContent='';return}
+  if(t.id==='pq'){S.ui.pq=t.value;$('#ptable').innerHTML=productRows()}
+});
+function readImg(f,cb){
+  if(!f.type||f.type.indexOf('image/')!==0){toast("Ce fichier n'est pas une image. Utilisez un JPG, un PNG ou un WebP.");return}
+  var fr=new FileReader();fr.onload=function(){var img=new Image();img.onload=function(){var m=1400,s=Math.min(1,m/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);try{cb(c.toDataURL('image/jpeg',.82))}catch(e){cb(fr.result)}};img.onerror=function(){toast("Impossible de lire cette image. Essayez un autre fichier.")};img.src=fr.result};fr.readAsDataURL(f);
+}
+document.addEventListener('change',function(e){
+  var t=e.target,k=t.dataset.file;if(!k||!t.files||!t.files.length)return;var files=[].slice.call(t.files);
+  if(k==='audio'){toast('Message audio ajouté. Il sera écouté par l\'équipe avant publication.');markDirty();t.value='';return}
+  if(k==='pimg'){var room=5-D.images.length;if(room<=0){toast('5 photos maximum. Retirez-en une pour en ajouter.');t.value='';return}files.slice(0,room).forEach(function(f){readImg(f,function(u){D.images.push(u);renderPhotos();updateCard()})});t.value='';return}
+  readImg(files[0],function(u){S.brand[k]=u;markDirty();render();toast(k==='cover'?'Couverture ajoutée.':'Logo ajouté.')});t.value='';
+});
+$('#overlay').addEventListener('click',closeDrawer);
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('#drawer').classList.contains('open'))closeDrawer()});
+
+render();
+})();
+</script>
+</body>
+</html>

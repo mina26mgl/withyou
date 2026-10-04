@@ -1,45 +1,64 @@
 "use client";
-import { useRef, useState } from "react";
-import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import type { PublicBrandCard } from "@withyou/shared-types";
+import { api } from "@/lib/api";
 
-type Brand = {
-  id: number;
-  name: string;
-  slug: string;
-  image: string;
-  tagline: string;
-};
-
-const MOCK_BRANDS: Brand[] = [
-  {
-    id: 1,
-    name: "Azul Cosmetique Story",
-    slug: "azul-cosmetique-story",
-    image: "/marque-jour-azul.jpg",
-    tagline: "raconté par",
-  },
-  {
-    id: 2,
-    name: "Dihya Story",
-    slug: "dihya-story",
-    image: "/marque-jour-dihya.png",
-    tagline: "raconté par",
-  },
-  {
-    id: 3,
-    name: "Namira Story",
-    slug: "namira-story",
-    image: "/marque-jour-namira.jpg",
-    tagline: "raconté par",
-  },
-];
-
-const CARD_WIDTH = 355;
 const GAP = 8;
 
-export default function BrandSlider({ excludeSlug }: { excludeSlug?: string } = {}) {
-  const brands = excludeSlug ? MOCK_BRANDS.filter((b) => b.slug !== excludeSlug) : MOCK_BRANDS;
+/** Forme des cartes : « home » (accueil, page marque) ou « rounded » (/search). Le contenu est le même. */
+const SHAPES = {
+  home: {
+    width: 355,
+    height: 447,
+    radius: 20,
+    border: "2px solid rgba(0,0,0,0.08)",
+    shadow: undefined,
+    innerRadius: 18,
+    frameRadius: 25,
+    insetShadow: undefined,
+    paddingBottom: 8,
+  },
+  rounded: {
+    width: 320,
+    height: 400,
+    radius: 54.08,
+    border: "1.61px solid #0000001A",
+    shadow: [
+      "0.9px 0.9px 2.7px 0px #0000000A",
+      "3.61px 3.61px 5.41px 0px #00000008",
+      "8.11px 8.11px 7.21px 0px #00000005",
+      "14.42px 15.32px 8.11px 0px #00000003",
+      "21.63px 23.44px 9.01px 0px #00000000",
+    ].join(", "),
+    innerRadius: 52,
+    frameRadius: 54.08,
+    insetShadow: "0px 0px 15.86px 8.11px #FFFFFF66 inset",
+    // Laisse la place aux ombres portées sous les cartes (le défilement les couperait).
+    paddingBottom: 28,
+  },
+} as const;
+
+export type BrandSliderShape = keyof typeof SHAPES;
+
+export default function BrandSlider({ excludeSlug, shape = "home" }: { excludeSlug?: string; shape?: BrandSliderShape } = {}) {
+  const S = SHAPES[shape];
+  const CARD_WIDTH = S.width;
+  // Marques publiées (page validée par withyou) : chaque carte ouvre sa vraie page.
+  const [published, setPublished] = useState<PublicBrandCard[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<PublicBrandCard[]>("/marques")
+      .then((list) => {
+        if (!cancelled) setPublished(list);
+      })
+      .catch((err) => console.error("Marques indisponibles:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const brands = excludeSlug ? published.filter((b) => b.slug !== excludeSlug) : published;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -55,14 +74,18 @@ export default function BrandSlider({ excludeSlug }: { excludeSlug?: string } = 
     setActiveIndex(index);
   }
 
+  // Aucune marque publiée : pas de section vide.
+  if (brands.length === 0) return null;
+
   return (
     <section>
     <div
       ref={scrollRef}
       onScroll={handleScroll}
-      className="flex overflow-x-auto px-4 pb-2 relative"
+      className="flex overflow-x-auto px-4 relative"
       style={{
         gap: "8px",
+        paddingBottom: S.paddingBottom,
         scrollSnapType: "x mandatory",
         scrollbarWidth: "none",
         msOverflowStyle: "none",
@@ -70,34 +93,39 @@ export default function BrandSlider({ excludeSlug }: { excludeSlug?: string } = 
     >
       {brands.map((brand) => (
         <Link
-          key={brand.id}
+          key={brand.slug}
           href={`/marque/${brand.slug}`}
           className="flex-shrink-0 relative cursor-pointer block"
           style={{
-            width: "355px",
-            height: "447px",
-            borderRadius: "20px",
-            border: "2px solid rgba(0,0,0,0.08)",
+            width: S.width,
+            height: S.height,
+            borderRadius: S.radius,
+            border: S.border,
+            boxShadow: S.shadow,
             scrollSnapAlign: "start",
             overflow: "hidden",
             textDecoration: "none",
           }}
         >
-          {/* Image de fond – plein cadre */}
-          <Image
-            src={brand.image}
-            alt={brand.name}
-            fill
-            sizes="355px"
-            className="object-cover"
-          />
+          {/* Image de couverture – plein cadre (l'image fournie avec une couverture vidéo) */}
+          {brand.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- images servies par l'API (http en local)
+            <img src={brand.imageUrl} alt={brand.name} className="absolute inset-0 h-full w-full object-cover" />
+          ) : (
+            <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, #DCE8DF 0%, #4A6E4F 100%)" }} />
+          )}
+
+          {/* Halo blanc intérieur (forme « rounded ») : par-dessus la photo */}
+          {S.insetShadow && (
+            <div className="absolute inset-0 pointer-events-none z-10" style={{ borderRadius: S.radius, boxShadow: S.insetShadow }} />
+          )}
 
           {/* Overlay border blanc – tous les côtés */}
           <div
             className="absolute pointer-events-none z-10"
             style={{
               inset: "1.77px 1.88px 1.77px 1.88px",
-              borderRadius: "18px",
+              borderRadius: S.innerRadius,
               border: "1px solid #FFFFFF",
              
             }}
@@ -107,11 +135,11 @@ export default function BrandSlider({ excludeSlug }: { excludeSlug?: string } = 
           <div
             className="absolute z-20 flex flex-col items-center justify-end"
             style={{
-              width: "358px",
               height: "123px",
-              top: "322px",
+              bottom: 0,
               left: "-3px",
-              borderRadius: "0px 0px 25px 25px",
+              right: "-3px",
+              borderRadius: `0px 0px ${S.frameRadius}px ${S.frameRadius}px`,
               border: "1px solid rgba(255,255,255,0.1)",
               overflow: "hidden",
               paddingTop: "16px",
@@ -154,7 +182,7 @@ export default function BrandSlider({ excludeSlug }: { excludeSlug?: string } = 
                   color: "rgba(255,255,255,0.9)",
                 }}
               >
-                {brand.tagline}
+                raconté par
               </span>
               <span
                 style={{

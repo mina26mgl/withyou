@@ -67,21 +67,35 @@ const WILAYA_COORDS: Record<string, [number, number]> = {
   "Relizane": [35.7381, 0.5569],
 };
 
-function normalizeWilaya(wilaya: string): string {
+/** Anciennes pages sans coordonnées : on retrouve la wilaya d'après le texte saisi. */
+function wilayaCoords(wilaya: string): [number, number] | null {
   const lower = wilaya.toLowerCase().trim();
+  if (!lower) return null;
   for (const key of Object.keys(WILAYA_COORDS)) {
-    if (key.toLowerCase() === lower) return key;
+    if (key.toLowerCase() === lower) return WILAYA_COORDS[key];
   }
-  // partial match
   for (const key of Object.keys(WILAYA_COORDS)) {
-    if (key.toLowerCase().includes(lower) || lower.includes(key.toLowerCase())) return key;
+    if (key.toLowerCase().includes(lower) || lower.includes(key.toLowerCase())) return WILAYA_COORDS[key];
   }
-  return "Alger";
+  return null;
 }
 
-export default function WilayaMapLeaflet({ wilaya, mode = "light" }: { wilaya: string; mode?: "light" | "dark" }) {
-  const key = normalizeWilaya(wilaya);
-  const coords = WILAYA_COORDS[key] ?? WILAYA_COORDS["Alger"];
+/** Vue d'ensemble de l'Algérie du Nord quand le lieu est inconnu (pas de faux repère). */
+const ALGERIA_CENTER: [number, number] = [34.5, 3.2];
+
+export default function WilayaMapLeaflet({
+  wilaya,
+  lat,
+  lng,
+  mode = "light",
+}: {
+  wilaya: string;
+  lat?: number | null;
+  lng?: number | null;
+  mode?: "light" | "dark";
+}) {
+  const exact: [number, number] | null = lat != null && lng != null ? [lat, lng] : wilayaCoords(wilaya);
+  const coords = exact ?? ALGERIA_CENTER;
 
   useEffect(() => {
     // Remove duplicate Leaflet CSS if SSR added it
@@ -91,8 +105,10 @@ export default function WilayaMapLeaflet({ wilaya, mode = "light" }: { wilaya: s
 
   return (
     <MapContainer
+      // center n'est lu qu'au montage : la clé recrée la carte quand le lieu change.
+      key={coords.join(",")}
       center={coords}
-      zoom={11}
+      zoom={exact ? 10 : 5}
       scrollWheelZoom={false}
       dragging={false}
       doubleClickZoom={false}
@@ -101,13 +117,10 @@ export default function WilayaMapLeaflet({ wilaya, mode = "light" }: { wilaya: s
       style={{ width: "100%", height: "100%", borderRadius: "inherit" }}
     >
       <TileLayer
-        url={
-          mode === "dark"
-            ? `https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=${process.env.NEXT_PUBLIC_STADIA_API_KEY}`
-            : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        }
+        // CARTO exige désormais une clé (tuiles barrées « API KEY REQUIRED ») : Stadia pour les deux modes.
+        url={`https://tiles.stadiamaps.com/tiles/${mode === "dark" ? "alidade_smooth_dark" : "alidade_smooth"}/{z}/{x}/{y}{r}.png?api_key=${process.env.NEXT_PUBLIC_STADIA_API_KEY}`}
       />
-      <Marker position={coords} icon={markerIcon} />
+      {exact && <Marker position={exact} icon={markerIcon} />}
     </MapContainer>
   );
 }
