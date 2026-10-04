@@ -27,6 +27,9 @@ export class CloudinaryStorageService implements StorageService {
     this.apiKey = decodeURIComponent(url.username);
     this.apiSecret = decodeURIComponent(url.password);
     this.cloudName = url.hostname;
+    if (url.protocol !== 'cloudinary:' || !this.apiKey || !this.apiSecret || !this.cloudName) {
+      throw new Error('CLOUDINARY_URL invalide');
+    }
   }
 
   async save(buffer: Buffer, key: string, mimeType: string): Promise<string> {
