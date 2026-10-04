@@ -7,6 +7,10 @@ export const metadata: Metadata = {
   title: "Dashboard partenaire — WithYou",
 };
 
+// Données propres au partenaire connecté : rendu à la demande, jamais au build
+// (sinon le build attend l'API et échoue si elle est endormie ou indisponible).
+export const dynamic = "force-dynamic";
+
 async function getProduitsPartenaire(): Promise<Produit[]> {
   try {
     return await api.get<Produit[]>("/produits/me");
