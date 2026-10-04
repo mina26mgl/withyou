@@ -20,8 +20,9 @@ async function bootstrap() {
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  const port = process.env.PORT_API_CORE ?? 3001;
-  await app.listen(port);
+  // PORT est imposé par l'hébergeur (Render, etc.) ; PORT_API_CORE sert en local.
+  const port = process.env.PORT ?? process.env.PORT_API_CORE ?? 3001;
+  await app.listen(port, '0.0.0.0');
 }
 
 bootstrap();
