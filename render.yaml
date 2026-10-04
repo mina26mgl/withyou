@@ -27,6 +27,9 @@ services:
       # URL publique de ce service, ex. https://withyou-api-core.onrender.com
       - key: API_PUBLIC_URL
         sync: false
+      # Stockage des fichiers envoyés : cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+      - key: CLOUDINARY_URL
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL

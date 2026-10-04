@@ -15,7 +15,11 @@ async function bootstrap() {
     next();
   });
   app.enableCors({
-    origin: process.env.WEB_APP_URL ?? 'http://localhost:3000',
+    // Plusieurs origines possibles, séparées par des virgules (domaine Vercel + alias).
+    origin: (process.env.WEB_APP_URL ?? 'http://localhost:3000')
+      .split(',')
+      .map((origin) => origin.trim().replace(/\/$/, ''))
+      .filter(Boolean),
     credentials: true,
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
